@@ -197,8 +197,62 @@ export default function BookingFlowPage() {
           router.push(`/booking/confirmation/${createdBooking.booking_ref || createdBooking.id}`);
         }
       } else {
-        // Real Razorpay gateway checkout script integration
-        alert('Opening production Razorpay gateway modal...');
+        // Real Razorpay gateway checkout integration
+        const loadScript = () => new Promise((resolve) => {
+          if (window.Razorpay) return resolve(true);
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+
+        const loaded = await loadScript();
+        if (!loaded) {
+          throw new Error('Failed to load Razorpay payment gateway SDK.');
+        }
+
+        const options = {
+          key: paymentRes.data.keyId,
+          amount: paymentRes.data.amount,
+          currency: paymentRes.data.currency || 'INR',
+          name: 'OnlyHikes.in',
+          description: `${hike.title} - ${seats} Student Pass(es)`,
+          image: hike.poster_url,
+          order_id: paymentRes.data.orderId,
+          handler: async function (response) {
+            setSubmittingBooking(true);
+            try {
+              const verifyRes = await verifyPayment({
+                booking_id: createdBooking.id,
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                signature: response.razorpay_signature
+              });
+
+              if (verifyRes.success) {
+                router.push(`/booking/confirmation/${createdBooking.booking_ref || createdBooking.id}`);
+              } else {
+                setBookingError('Payment received but verification signature failed. Contact support.');
+              }
+            } catch (err) {
+              setBookingError('Payment verification error: ' + err.message);
+            } finally {
+              setSubmittingBooking(false);
+            }
+          },
+          prefill: {
+            name: studentName,
+            email: studentEmail,
+            contact: studentPhone
+          },
+          theme: {
+            color: '#CCFF00'
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
       }
     } catch (err) {
       setBookingError(err.message || 'An error occurred during booking creation.');
