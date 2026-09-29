@@ -554,7 +554,7 @@ export default function BookingFlowPage() {
               )}
 
               <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-muted">
-                Demo code: <strong className="text-acid">ONLYHIKES50</strong> gives flat ₹50 off.
+                Student promo: Use code <strong className="text-acid">ONLYHIKES50</strong> for flat ₹50 off.
               </div>
             </div>
 

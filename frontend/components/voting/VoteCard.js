@@ -42,15 +42,6 @@ export default function VoteCard({
           </Badge>
         </div>
 
-        {/* Demo Indicator if applicable */}
-        {isPlaceholderDemo && (
-          <div className="absolute top-4 right-4">
-            <Badge variant="demo" size="xs">
-              Demo Votes
-            </Badge>
-          </div>
-        )}
-
         {isVotedByMe && (
           <div className="absolute bottom-3 right-4 bg-acid text-charcoal-950 font-black text-xs px-3 py-1 rounded-full flex items-center gap-1.5 shadow-acid-sm">
             <CheckCircle2 className="w-3.5 h-3.5" />

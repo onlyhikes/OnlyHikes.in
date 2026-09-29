@@ -23,7 +23,7 @@ export default function Footer() {
             </p>
           </div>
           <Link
-            href="/#community"
+            href="/community"
             className="inline-flex items-center gap-2 bg-acid text-charcoal-950 px-6 py-3.5 rounded-xl font-black text-sm uppercase tracking-wide hover:bg-acid-400 transition"
           >
             Join Campus Reps <ArrowUpRight className="w-4 h-4" />
@@ -50,20 +50,22 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
-                href="https://instagram.com"
+                href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://instagram.com/onlyhikes.in'}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-xl bg-charcoal-850 hover:bg-acid hover:text-charcoal-950 text-muted flex items-center justify-center transition"
+                className="w-9 h-9 rounded-xl bg-charcoal-850 hover:bg-pink-600 hover:text-white text-muted flex items-center justify-center transition"
                 aria-label="Instagram"
+                title="OnlyHikes Instagram"
               >
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="https://chat.whatsapp.com/demo-invite-jaipur-wild"
+                href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/demo-invite-jaipur-wild'}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-charcoal-850 hover:bg-emerald-500 hover:text-white text-muted flex items-center justify-center transition"
                 aria-label="WhatsApp Community"
+                title="OnlyHikes WhatsApp Tribe"
               >
                 <MessageSquare className="w-4 h-4" />
               </a>

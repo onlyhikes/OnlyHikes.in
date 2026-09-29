@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Compass, Mountain, Vote, User, ShieldAlert, ArrowRight, LogOut } from 'lucide-react';
+import { Menu, X, Compass, Mountain, Vote, User, Users, ShieldAlert, ArrowRight, LogOut, Instagram } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 
@@ -24,7 +24,7 @@ export default function Navbar() {
     { label: 'Hikes', href: '/hikes', icon: Mountain },
     { label: 'Explore', href: '/explore', icon: Compass },
     { label: 'Vote', href: '/vote', icon: Vote },
-    { label: 'About', href: '/#about', icon: null },
+    { label: 'Community', href: '/community', icon: Users },
   ];
 
   const isActive = (href) => {
@@ -122,6 +122,17 @@ export default function Navbar() {
                 </span>
               </Link>
             )}
+
+            <a
+              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://instagram.com/onlyhikes.in'}
+              target="_blank"
+              rel="noreferrer"
+              className="p-2 text-muted hover:text-pink-400 hover:bg-white/5 rounded-xl transition"
+              aria-label="Instagram"
+              title="OnlyHikes Instagram"
+            >
+              <Instagram className="w-4 h-4" />
+            </a>
 
             <Link href="/hikes">
               <Button variant="acid" size="sm" className="font-extrabold uppercase tracking-wide">

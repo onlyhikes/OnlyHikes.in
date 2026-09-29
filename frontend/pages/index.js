@@ -97,38 +97,6 @@ export default function HomePage() {
 
   return (
     <Layout>
-      {/* Dev / Quick Test Bar for Evaluators */}
-      <div className="bg-charcoal-900 border-b border-white/10 px-4 py-2 text-xs">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-acid animate-ping" />
-            <span className="font-bold text-offwhite">Evaluator Quick Switcher:</span>
-            <span className="text-muted">
-              {user ? `Active: ${user.full_name} (${isAdmin ? 'Admin' : 'Student'})` : 'Guest Session'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {!user ? (
-              <>
-                <button
-                  onClick={loginAsDemoStudent}
-                  className="px-2.5 py-1 bg-acid/15 hover:bg-acid text-acid hover:text-charcoal-950 font-bold rounded-lg transition"
-                >
-                  ⚡ Student View
-                </button>
-                <button
-                  onClick={loginAsDemoAdmin}
-                  className="px-2.5 py-1 bg-flame/15 hover:bg-flame text-flame hover:text-white font-bold rounded-lg transition"
-                >
-                  🛡️ Admin View
-                </button>
-              </>
-            ) : (
-              <span className="text-acid font-semibold text-[11px]">Logged in</span>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* ==================================================================== */}
       {/* 1. HERO SECTION */}
@@ -152,9 +120,6 @@ export default function HomePage() {
             </span>
             <span className="text-xs font-bold text-offwhite tracking-wide">
               1,200+ Jaipur students hiked with us
-            </span>
-            <span className="text-[10px] bg-purple-950/80 text-purple-300 px-2 py-0.5 rounded-full font-bold uppercase border border-purple-500/30">
-              Demo Data
             </span>
           </motion.div>
 
@@ -480,11 +445,6 @@ export default function HomePage() {
           <p className="text-muted text-sm sm:text-base mt-2">
             Real experiences from students across MNIT, Manipal, Amity, JECRC, and Rajasthan University.
           </p>
-          <div className="inline-block mt-2">
-            <Badge variant="demo" size="xs">
-              Clearly Marked Demo Review Architecture
-            </Badge>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

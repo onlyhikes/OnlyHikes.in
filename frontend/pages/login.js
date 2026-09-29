@@ -102,36 +102,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Quick Demo Access Buttons for instant evaluation */}
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <span className="text-[10px] text-muted uppercase tracking-widest font-black block text-center mb-3">
-              Fast Evaluator Quick Login
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  loginAsDemoStudent();
-                  router.push('/account');
-                }}
-                className="p-2.5 bg-charcoal-850 hover:bg-charcoal-800 border border-white/10 rounded-xl text-xs font-bold text-acid flex items-center justify-center gap-1.5 transition"
-              >
-                <span>⚡ Student Demo</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  loginAsDemoAdmin();
-                  router.push('/admin');
-                }}
-                className="p-2.5 bg-charcoal-850 hover:bg-charcoal-800 border border-white/10 rounded-xl text-xs font-bold text-flame flex items-center justify-center gap-1.5 transition"
-              >
-                <span>🛡️ Admin Demo</span>
-              </button>
-            </div>
-          </div>
-
           <div className="mt-6 text-center text-xs text-muted">
             Don't have an account yet?{' '}
             <Link href="/signup" className="text-acid font-bold hover:underline">
