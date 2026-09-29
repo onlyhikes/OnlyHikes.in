@@ -50,7 +50,7 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
-                href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://instagram.com/onlyhikes.in'}
+                href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/onlyhikes.in/'}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-charcoal-850 hover:bg-pink-600 hover:text-white text-muted flex items-center justify-center transition"
@@ -60,7 +60,7 @@ export default function Footer() {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/demo-invite-jaipur-wild'}
+                href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'}
                 target="_blank"
                 rel="noreferrer"
                 className="w-9 h-9 rounded-xl bg-charcoal-850 hover:bg-emerald-500 hover:text-white text-muted flex items-center justify-center transition"

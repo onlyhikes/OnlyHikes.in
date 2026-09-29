@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Compass, Mountain, Vote, User, Users, ShieldAlert, ArrowRight, LogOut, Instagram } from 'lucide-react';
+import { Menu, X, Compass, Mountain, Vote, User, Users, ShieldAlert, ArrowRight, LogOut, Instagram, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 
@@ -124,7 +124,7 @@ export default function Navbar() {
             )}
 
             <a
-              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://instagram.com/onlyhikes.in'}
+              href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/onlyhikes.in/'}
               target="_blank"
               rel="noreferrer"
               className="p-2 text-muted hover:text-pink-400 hover:bg-white/5 rounded-xl transition"
@@ -235,6 +235,27 @@ export default function Navbar() {
                   </Link>
                 </div>
               )}
+
+              <div className="flex items-center gap-2 pt-2">
+                <a
+                  href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/onlyhikes.in/'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-charcoal-850 border border-white/10 text-xs font-bold text-pink-400 hover:bg-charcoal-800 transition"
+                >
+                  <Instagram className="w-4 h-4" />
+                  Instagram
+                </a>
+                <a
+                  href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-charcoal-850 border border-white/10 text-xs font-bold text-emerald-400 hover:bg-charcoal-800 transition"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  WhatsApp
+                </a>
+              </div>
 
               <Link
                 href="/hikes"

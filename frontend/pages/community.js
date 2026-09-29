@@ -20,9 +20,9 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 
 export default function CommunityPage() {
-  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://instagram.com/onlyhikes.in';
+  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/onlyhikes.in/';
   const instagramHandle = process.env.NEXT_PUBLIC_INSTAGRAM_HANDLE || '@onlyhikes.in';
-  const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/demo-invite-jaipur-wild';
+  const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27';
 
   const colleges = [
     'MNIT Jaipur',

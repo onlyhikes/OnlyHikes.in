@@ -103,7 +103,7 @@ export default function StudentAccountPage() {
       total_amount: 598.00,
       payment_status: 'paid',
       pickup_title: 'WTP / Gaurav Tower (04:45 AM)',
-      whatsapp_group_url: 'https://chat.whatsapp.com/demo-invite-jaipur-wild'
+      whatsapp_group_url: process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'
     }
   ];
 
@@ -217,7 +217,7 @@ export default function StudentAccountPage() {
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <a
-                        href={b.whatsapp_group_url || 'https://chat.whatsapp.com/demo-invite-jaipur-wild'}
+                        href={b.whatsapp_group_url || process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center justify-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 px-4 py-2.5 rounded-xl text-xs font-bold transition"

@@ -133,7 +133,7 @@ async function createBooking(req, res, next) {
       payment_status: 'pending', // Pending real gateway payment!
       payment_id: null,
       notes: notes || '',
-      whatsapp_group_url: process.env.DEFAULT_WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/demo-invite-jaipur-wild'
+      whatsapp_group_url: process.env.DEFAULT_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'
     };
 
     if (isConfigured && supabaseAdmin) {

@@ -76,7 +76,7 @@ export default function BookingConfirmationPage() {
     total_amount: 548.00,
     payment_status: 'paid',
     student_name: 'Aarav Sharma',
-    whatsapp_group_url: process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://chat.whatsapp.com/demo-invite-jaipur-wild'
+    whatsapp_group_url: process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'
   };
 
   const isPaid = bookingData.payment_status === 'paid';
@@ -158,7 +158,7 @@ export default function BookingConfirmationPage() {
           {/* Configurable WhatsApp Group CTA */}
           <div className="space-y-4">
             <a
-              href={bookingData.whatsapp_group_url || 'https://chat.whatsapp.com/demo-invite-jaipur-wild'}
+              href={bookingData.whatsapp_group_url || process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'}
               target="_blank"
               rel="noreferrer"
               className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-charcoal-950 font-black text-sm uppercase tracking-wide py-4 px-6 rounded-2xl shadow-xl transition-all"
