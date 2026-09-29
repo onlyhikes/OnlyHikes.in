@@ -1,5 +1,6 @@
 -- ====================================================================
 -- ONLYHIKES.IN — SUPABASE DATABASE MIGRATION: 002_rls_policies.sql
+-- Idempotent RLS Policies & Triggers
 -- ====================================================================
 
 -- Enable RLS on all tables
@@ -35,110 +36,142 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 1. Profiles
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" ON public.profiles
     FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 CREATE POLICY "Users can insert their own profile" ON public.profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- 2. Hikes
+DROP POLICY IF EXISTS "Published hikes are viewable by everyone" ON public.hikes;
 CREATE POLICY "Published hikes are viewable by everyone" ON public.hikes
     FOR SELECT USING (is_published = true OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can insert hikes" ON public.hikes;
 CREATE POLICY "Admins can insert hikes" ON public.hikes
     FOR INSERT WITH CHECK (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can update hikes" ON public.hikes;
 CREATE POLICY "Admins can update hikes" ON public.hikes
     FOR UPDATE USING (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can delete hikes" ON public.hikes;
 CREATE POLICY "Admins can delete hikes" ON public.hikes
     FOR DELETE USING (public.is_admin(auth.uid()));
 
 -- 3. Hike Images & Pickup Locations
+DROP POLICY IF EXISTS "Hike images viewable by everyone" ON public.hike_images;
 CREATE POLICY "Hike images viewable by everyone" ON public.hike_images
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage hike images" ON public.hike_images;
 CREATE POLICY "Admins can manage hike images" ON public.hike_images
     FOR ALL USING (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Pickup locations viewable by everyone" ON public.pickup_locations;
 CREATE POLICY "Pickup locations viewable by everyone" ON public.pickup_locations
     FOR SELECT USING (is_active = true OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can manage pickup locations" ON public.pickup_locations;
 CREATE POLICY "Admins can manage pickup locations" ON public.pickup_locations
     FOR ALL USING (public.is_admin(auth.uid()));
 
 -- 4. Voting Rounds & Options
+DROP POLICY IF EXISTS "Voting rounds viewable by everyone" ON public.voting_rounds;
 CREATE POLICY "Voting rounds viewable by everyone" ON public.voting_rounds
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage voting rounds" ON public.voting_rounds;
 CREATE POLICY "Admins can manage voting rounds" ON public.voting_rounds
     FOR ALL USING (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Voting options viewable by everyone" ON public.voting_options;
 CREATE POLICY "Voting options viewable by everyone" ON public.voting_options
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage voting options" ON public.voting_options;
 CREATE POLICY "Admins can manage voting options" ON public.voting_options
     FOR ALL USING (public.is_admin(auth.uid()));
 
 -- 5. Votes (Enforce authentication & 1 vote per user)
+DROP POLICY IF EXISTS "Users can view votes count" ON public.votes;
 CREATE POLICY "Users can view votes count" ON public.votes
     FOR SELECT USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Authenticated users can cast one vote" ON public.votes;
 CREATE POLICY "Authenticated users can cast one vote" ON public.votes
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- 6. Bookings
+DROP POLICY IF EXISTS "Users can view their own bookings" ON public.bookings;
 CREATE POLICY "Users can view their own bookings" ON public.bookings
     FOR SELECT USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Users or guests can create bookings" ON public.bookings;
 CREATE POLICY "Users or guests can create bookings" ON public.bookings
     FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Admins can update bookings" ON public.bookings;
 CREATE POLICY "Admins can update bookings" ON public.bookings
     FOR UPDATE USING (public.is_admin(auth.uid()));
 
 -- 7. Coupons
+DROP POLICY IF EXISTS "Active coupons viewable by authenticated users" ON public.coupons;
 CREATE POLICY "Active coupons viewable by authenticated users" ON public.coupons
     FOR SELECT USING (is_active = true OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can manage coupons" ON public.coupons;
 CREATE POLICY "Admins can manage coupons" ON public.coupons
     FOR ALL USING (public.is_admin(auth.uid()));
 
 -- 8. Reviews
+DROP POLICY IF EXISTS "Verified reviews viewable by everyone" ON public.reviews;
 CREATE POLICY "Verified reviews viewable by everyone" ON public.reviews
     FOR SELECT USING (is_verified = true OR auth.uid() = user_id OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Authenticated users can submit review" ON public.reviews;
 CREATE POLICY "Authenticated users can submit review" ON public.reviews
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- 9. Saved Hikes
+DROP POLICY IF EXISTS "Users can manage their saved hikes" ON public.saved_hikes;
 CREATE POLICY "Users can manage their saved hikes" ON public.saved_hikes
     FOR ALL USING (auth.uid() = user_id);
 
 -- 10. Referrals & Rewards
+DROP POLICY IF EXISTS "Users can view their referrals" ON public.referrals;
 CREATE POLICY "Users can view their referrals" ON public.referrals
     FOR SELECT USING (auth.uid() = referrer_user_id OR auth.uid() = referred_user_id OR public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Users can view their reward balance" ON public.referral_rewards;
 CREATE POLICY "Users can view their reward balance" ON public.referral_rewards
     FOR SELECT USING (auth.uid() = user_id OR public.is_admin(auth.uid()));
 
 -- 11. Explore Categories & Items
+DROP POLICY IF EXISTS "Explore categories viewable by everyone" ON public.explore_categories;
 CREATE POLICY "Explore categories viewable by everyone" ON public.explore_categories
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Explore items viewable by everyone" ON public.explore_items;
 CREATE POLICY "Explore items viewable by everyone" ON public.explore_items
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage explore" ON public.explore_items;
 CREATE POLICY "Admins can manage explore" ON public.explore_items
     FOR ALL USING (public.is_admin(auth.uid()));
 
 -- 12. Site Content
+DROP POLICY IF EXISTS "Site content viewable by everyone" ON public.site_content;
 CREATE POLICY "Site content viewable by everyone" ON public.site_content
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage site content" ON public.site_content;
 CREATE POLICY "Admins can manage site content" ON public.site_content
     FOR ALL USING (public.is_admin(auth.uid()));
 
