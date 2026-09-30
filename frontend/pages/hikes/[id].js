@@ -11,27 +11,36 @@ import {
   Coffee,
   ShieldCheck,
   CheckCircle2,
+  XCircle,
   AlertTriangle,
   Users,
   Backpack,
   ArrowRight,
   Share2,
-  Bookmark
+  Bookmark,
+  Sparkles,
+  Mountain,
+  Flag,
+  Film
 } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
 import SeatProgressBar from '../../components/ui/SeatProgressBar';
-import { getHikeDetails } from '../../lib/api';
+import { getHikeDetails, getHikeWaypoints, toggleSaveHike } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function TrekDetailPage() {
   const router = useRouter();
   const { id } = router.query;
+  const { user } = useAuth();
+
   const [hike, setHike] = useState(null);
+  const [waypoints, setWaypoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedPickup, setSelectedPickup] = useState('');
   const [saved, setSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -45,6 +54,10 @@ export default function TrekDetailPage() {
           if (res.data.pickup_locations && res.data.pickup_locations.length > 0) {
             setSelectedPickup(res.data.pickup_locations[0].id);
           }
+
+          // Fetch graphical route waypoints for this hike
+          const wpRes = await getHikeWaypoints(res.data.id);
+          if (wpRes.data) setWaypoints(wpRes.data);
         }
       } catch (err) {
         console.error('Failed to load hike details:', err);
@@ -54,6 +67,23 @@ export default function TrekDetailPage() {
     }
     fetchHike();
   }, [id]);
+
+  const handleToggleSave = async () => {
+    if (!user) {
+      alert('Please log in with your student account to save hikes.');
+      return;
+    }
+    try {
+      const res = await toggleSaveHike(hike.id);
+      if (res.saved !== undefined) {
+        setSaved(res.saved);
+        setSaveMessage(res.message);
+        setTimeout(() => setSaveMessage(null), 3000);
+      }
+    } catch (err) {
+      console.error('Failed to toggle save:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -80,17 +110,28 @@ export default function TrekDetailPage() {
     );
   }
 
-  const remainingSeats = Math.max(0, (hike.total_seats || 25) - (hike.booked_seats || 0));
+  const sellingPrice = hike.selling_price || hike.price || 299;
+  const originalPrice = hike.original_price || (sellingPrice + 200);
+  const themeAccent = hike.theme_accent || '#CCFF00';
+  const bookedSeats = hike.booked_seats || 0;
+  const totalSlots = hike.slots_total || hike.total_seats || 25;
+  const remainingSeats = Math.max(0, totalSlots - bookedSeats);
   const isSoldOut = remainingSeats === 0;
 
-  const difficultyVariant = {
-    Easy: 'success',
-    Moderate: 'acid',
-    Challenging: 'flame',
-    Strenuous: 'flameSolid',
-  }[hike.difficulty] || 'acid';
-
   const galleryImages = [hike.poster_url, ...(hike.gallery_urls || [])].filter(Boolean);
+
+  const inclusions = Array.isArray(hike.inclusions) && hike.inclusions.length > 0
+    ? hike.inclusions
+    : [
+        'Coordinated AC transit pickup & drop',
+        'Lead wilderness marshals & first-aid',
+        'Hydration pack & summit refreshments',
+        'Curated group photo package'
+      ];
+
+  const exclusions = Array.isArray(hike.exclusions) && hike.exclusions.length > 0
+    ? hike.exclusions
+    : ['Personal trekking daypack', 'Individual transport outside designated stops'];
 
   return (
     <Layout>
@@ -100,18 +141,21 @@ export default function TrekDetailPage() {
         <meta property="og:image" content={hike.poster_url} />
       </Head>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-32">
-        {/* Breadcrumb & Tags */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32">
+        {/* Breadcrumb & Top Actions */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2 text-xs font-bold text-muted">
             <Link href="/" className="hover:text-offwhite transition">Home</Link>
             <span>/</span>
             <Link href="/hikes" className="hover:text-offwhite transition">Hikes</Link>
             <span>/</span>
-            <span className="text-acid">{hike.title}</span>
+            <span style={{ color: themeAccent }}>{hike.title}</span>
           </div>
 
           <div className="flex items-center gap-2">
+            {saveMessage && (
+              <span className="text-[11px] font-bold text-acid mr-2">{saveMessage}</span>
+            )}
             <button
               onClick={() => {
                 if (navigator.share) {
@@ -121,14 +165,14 @@ export default function TrekDetailPage() {
                   alert('Trek link copied to clipboard!');
                 }
               }}
-              className="p-2 bg-charcoal-850 hover:bg-charcoal-800 border border-white/10 rounded-xl text-offwhite transition"
+              className="p-2.5 bg-charcoal-850 hover:bg-charcoal-800 border border-white/10 rounded-xl text-offwhite transition"
               title="Share Trail"
             >
               <Share2 className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setSaved(!saved)}
-              className={`p-2 border rounded-xl transition ${
+              onClick={handleToggleSave}
+              className={`p-2.5 border rounded-xl transition ${
                 saved
                   ? 'bg-acid text-charcoal-950 border-acid'
                   : 'bg-charcoal-850 hover:bg-charcoal-800 border-white/10 text-offwhite'
@@ -144,7 +188,6 @@ export default function TrekDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-16">
           {/* Left Column: Big Poster & Gallery */}
           <div className="lg:col-span-7 space-y-4">
-            {/* Primary Large Poster View */}
             <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden border border-white/10 bg-charcoal-900 shadow-2xl">
               <img
                 src={selectedImage || hike.poster_url}
@@ -152,9 +195,17 @@ export default function TrekDetailPage() {
                 className="w-full h-full object-cover transition-all duration-300"
               />
               <div className="absolute top-4 left-4">
-                <Badge variant={difficultyVariant} size="sm">
-                  {hike.difficulty}
-                </Badge>
+                <span
+                  className="px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md border flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: 'rgba(7, 7, 9, 0.85)',
+                    borderColor: themeAccent,
+                    color: themeAccent
+                  }}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{hike.tag || 'Sunrise Expedition'}</span>
+                </span>
               </div>
             </div>
 
@@ -177,10 +228,16 @@ export default function TrekDetailPage() {
           </div>
 
           {/* Right Column: Key Trek Specs & Booking Trigger */}
-          <div className="lg:col-span-5 flex flex-col justify-between bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl">
+          <div className="lg:col-span-5 flex flex-col justify-between bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            {/* Dynamic Ambient Glow */}
+            <div
+              className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-15"
+              style={{ backgroundColor: themeAccent }}
+            />
+
             <div>
               <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-acid text-xs font-black uppercase tracking-widest">
+                <span className="text-xs font-black uppercase tracking-widest font-mono" style={{ color: themeAccent }}>
                   JAIPUR ARAVALI TRAIL
                 </span>
                 <span className="text-xs font-bold text-muted bg-charcoal-800 px-3 py-1 rounded-full">
@@ -210,22 +267,27 @@ export default function TrekDetailPage() {
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-muted font-bold uppercase tracking-wider block">Pickup & Transport</span>
+                  <span className="text-[10px] text-muted font-bold uppercase tracking-wider block">Duration & Return</span>
                   <div className="flex items-center gap-1.5 text-xs font-black text-offwhite mt-0.5">
-                    <Bus className="w-3.5 h-3.5 text-acid" />
-                    <span>AC Coach Included</span>
+                    <Mountain className="w-3.5 h-3.5 text-acid" />
+                    <span>{hike.duration || '4-5 Hours'}</span>
                   </div>
                   <div className="text-[11px] text-muted font-medium mt-0.5">
-                    4 City Pickups
+                    Return by ~{hike.return_time || '11:00 AM'}
                   </div>
                 </div>
               </div>
 
-              {/* Price & Seat Bar */}
+              {/* Dual Price & Real Seat Bar */}
               <div className="mb-6">
                 <div className="flex items-baseline justify-between mb-3">
                   <div>
-                    <span className="text-3xl font-display font-black text-offwhite">₹{hike.price}</span>
+                    <span className="text-3xl font-display font-black text-offwhite">₹{sellingPrice}</span>
+                    {originalPrice > sellingPrice && (
+                      <span className="text-base text-muted line-through font-semibold ml-2">
+                        ₹{originalPrice}
+                      </span>
+                    )}
                     <span className="text-xs text-muted font-semibold ml-1.5">/ student pass</span>
                   </div>
                   <span className="text-xs font-bold text-acid uppercase tracking-wider">
@@ -234,12 +296,12 @@ export default function TrekDetailPage() {
                 </div>
 
                 <SeatProgressBar
-                  booked={hike.booked_seats || 0}
-                  total={hike.total_seats || 25}
+                  booked={bookedSeats}
+                  total={totalSlots}
                 />
               </div>
 
-              {/* Configurable Pickup Selector */}
+              {/* Pickup Location Selector */}
               {hike.pickup_locations && hike.pickup_locations.length > 0 && (
                 <div className="mb-6">
                   <label className="block text-xs font-black uppercase tracking-wider text-offwhite mb-2">
@@ -269,7 +331,7 @@ export default function TrekDetailPage() {
                   disabled={isSoldOut}
                   className="w-full uppercase font-black tracking-wide"
                 >
-                  {isSoldOut ? 'Sold Out' : 'Book Your Seat Now →'}
+                  {isSoldOut ? 'Sold Out' : 'Reserve Your Spot Now →'}
                 </Button>
               </Link>
               <p className="text-center text-[11px] text-muted mt-2">
@@ -279,10 +341,95 @@ export default function TrekDetailPage() {
           </div>
         </div>
 
-        {/* Detailed Sections Tabs / Layout */}
+        {/* ==================================================================== */}
+        {/* GRAPHICAL ROUTE WAYPOINTS SECTION */}
+        {/* ==================================================================== */}
+        {waypoints && waypoints.length > 0 && (
+          <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-10 mb-16 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div>
+                <span className="text-acid text-xs font-black uppercase tracking-widest block mb-1">
+                  EXPEDITION JOURNEY PATH
+                </span>
+                <h2 className="font-display font-black text-2xl sm:text-3xl text-offwhite">
+                  GRAPHICAL TRAIL WAYPOINTS
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-acid animate-ping" />
+                <span className="text-xs font-bold text-muted">Sequential Trail Milestones</span>
+              </div>
+            </div>
+
+            <div className="relative">
+              {/* Timeline connecting line */}
+              <div className="hidden md:block absolute top-1/2 left-8 right-8 h-1 bg-gradient-to-r from-acid via-flame to-acid -translate-y-1/2 z-0 opacity-20" />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 relative z-10">
+                {waypoints.map((wp, idx) => (
+                  <div
+                    key={wp.id}
+                    className="bg-charcoal-850 border border-white/10 hover:border-acid/40 rounded-2xl p-4 flex flex-col justify-between transition group"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="w-7 h-7 rounded-lg bg-acid/15 border border-acid/30 text-acid font-black font-display text-xs flex items-center justify-center">
+                          #{wp.step_number || (idx + 1)}
+                        </span>
+                        {wp.distance_marker && (
+                          <span className="text-[10px] font-mono text-muted bg-charcoal-800 px-2 py-0.5 rounded">
+                            {wp.distance_marker}
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="font-display font-black text-sm text-offwhite mb-1 group-hover:text-acid transition">
+                        {wp.title}
+                      </h4>
+                      {wp.subtitle && (
+                        <p className="text-muted text-[11px] leading-relaxed">
+                          {wp.subtitle}
+                        </p>
+                      )}
+                    </div>
+
+                    {wp.elevation_gain && (
+                      <div className="mt-4 pt-2 border-t border-white/5 text-[10px] font-mono text-flame font-bold">
+                        {wp.elevation_gain}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Video / Reel Embed Section (If Available) */}
+        {hike.video_url && (
+          <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8 mb-16">
+            <div className="flex items-center gap-2 mb-4">
+              <Film className="w-5 h-5 text-flame" />
+              <h2 className="font-display font-black text-xl text-offwhite">
+                EXPEDITION TEASER & REEL
+              </h2>
+            </div>
+            <div className="aspect-video w-full rounded-2xl overflow-hidden bg-charcoal-950 border border-white/10">
+              <iframe
+                src={hike.video_url.replace('watch?v=', 'embed/')}
+                title="Trek Video Teaser"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </section>
+        )}
+
+        {/* Detailed Logistics Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-8 space-y-12">
-            {/* 1. Description */}
+          <div className="lg:col-span-8 space-y-10">
+            {/* Description */}
             <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8">
               <h2 className="font-display font-black text-xl text-offwhite mb-4">
                 TRAIL EXPERIENCE & VIBE
@@ -292,39 +439,60 @@ export default function TrekDetailPage() {
               </p>
             </section>
 
-            {/* 2. Included Services (Database Backed) */}
+            {/* Inclusions & Exclusions */}
             <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8">
               <h2 className="font-display font-black text-xl text-offwhite mb-6">
-                WHAT'S INCLUDED IN YOUR PASS
+                WHAT'S INCLUDED & WHAT'S NOT
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(hike.included_services || [
-                  'Pickup & Drop',
-                  'Guided Hike',
-                  'Food',
-                  'Water',
-                  'Trek Coordinators'
-                ]).map((srv, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3 bg-charcoal-850 border border-white/5 p-3.5 rounded-2xl"
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-acid shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold text-offwhite">
-                      {srv}
-                    </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-xs font-bold text-acid uppercase tracking-wider mb-3">Included in Your Pass</h3>
+                  <div className="space-y-2.5">
+                    {inclusions.map((inc, i) => (
+                      <div key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-offwhite">
+                        <CheckCircle2 className="w-4 h-4 text-acid shrink-0 mt-0.5" />
+                        <span>{inc}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-3">Not Included</h3>
+                  <div className="space-y-2.5">
+                    {exclusions.map((exc, i) => (
+                      <div key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-muted">
+                        <XCircle className="w-4 h-4 text-muted/60 shrink-0 mt-0.5" />
+                        <span>{exc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </section>
 
-            {/* 3. Jaipur Bus Pickup Points (NOT generic meeting point) */}
+            {/* Food & Hydration Briefing */}
+            {hike.food_water_info && (
+              <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <Coffee className="w-5 h-5 text-amber-400" />
+                  <h2 className="font-display font-black text-xl text-offwhite">
+                    FOOD & HYDRATION BRIEFING
+                  </h2>
+                </div>
+                <p className="text-muted text-sm leading-relaxed whitespace-pre-line">
+                  {hike.food_water_info}
+                </p>
+              </section>
+            )}
+
+            {/* Jaipur Pickups List */}
             <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display font-black text-xl text-offwhite">
                   CONFIGURED PICKUP LOCATIONS
                 </h2>
-                <span className="text-xs text-acid font-bold">AC Bus Route</span>
+                <span className="text-xs text-acid font-bold">AC Coach Stops</span>
               </div>
               <p className="text-muted text-xs mb-6">
                 Our OnlyHikes private coach makes scheduled stops across major Jaipur student hubs:
@@ -353,80 +521,50 @@ export default function TrekDetailPage() {
               </div>
             </section>
 
-            {/* 4. Things to Carry */}
-            <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8">
-              <h2 className="font-display font-black text-xl text-offwhite mb-4 flex items-center gap-2">
-                <Backpack className="w-5 h-5 text-acid" />
-                THINGS TO CARRY CHECKLIST
-              </h2>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-offwhite/90">
-                {(hike.things_to_carry || [
-                  'Sturdy sports/hiking shoes with good grip',
-                  'Valid College ID Card',
-                  '1 Litre reusable water bottle',
-                  'Small lightweight daypack',
-                  'Light windcheater or hoodie for early morning winds'
-                ]).map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-2 bg-charcoal-850 p-3 rounded-xl border border-white/5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-acid shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            {/* 5. Safety Guidelines */}
+            {/* Safety Rules */}
             <section className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8">
               <h2 className="font-display font-black text-xl text-offwhite mb-4 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 COMMUNITY SAFETY RULES
               </h2>
-              <ul className="space-y-2 text-xs sm:text-sm text-muted">
-                {(hike.safety_rules || [
-                  'Always stay within audible distance of the assigned trek coordinators.',
-                  'Strictly no leaning or sitting over precarious parapets or cliff edges.',
-                  'First-aid supplies, antiseptic, and glucose packs are carried by our marshals.',
-                  'Zero alcohol or substance tolerance — this is a safe, inclusive college space.'
-                ]).map((rule, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{rule}</span>
-                  </li>
-                ))}
+              <ul className="space-y-2.5 text-xs sm:text-sm text-muted">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Always stay within audible distance of assigned hike marshals.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Strictly no leaning or sitting over precarious parapets or cliff drops.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>First-aid supplies, antiseptic, and glucose packs are carried by marshals.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Zero alcohol or substance tolerance — this is a safe, inclusive college space.</span>
+                </li>
               </ul>
             </section>
           </div>
 
-          {/* Right Sticky Sidebar for Desktop */}
+          {/* Right Sticky Sidebar */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sticky top-28">
+              <span className="text-[10px] font-black uppercase tracking-widest text-acid block mb-1">
+                SEATS STATUS
+              </span>
               <h3 className="font-display font-black text-lg text-offwhite mb-3">
-                STUDENTS CONFIRMED ({hike.booked_seats || 18})
+                {bookedSeats} / {totalSlots} BOOKED
               </h3>
               <p className="text-muted text-xs mb-4">
-                Join students already booked from MNIT, Manipal University Jaipur, Amity, and JECRC.
+                {remainingSeats > 0 ? `${remainingSeats} seats available for this Sunday.` : 'This expedition is fully booked!'}
               </p>
-
-              {/* Avatar stack */}
-              <div className="flex items-center -space-x-2 mb-6">
-                {['#CCFF00', '#FF5500', '#3B82F6', '#10B981', '#8B5CF6'].map((color, i) => (
-                  <div
-                    key={i}
-                    style={{ backgroundColor: color }}
-                    className="w-9 h-9 rounded-full border-2 border-charcoal-950 flex items-center justify-center font-black text-charcoal-950 text-xs shadow-md"
-                  >
-                    {['A', 'R', 'T', 'K', 'V'][i]}
-                  </div>
-                ))}
-                <div className="w-9 h-9 rounded-full bg-charcoal-800 border-2 border-charcoal-950 flex items-center justify-center text-xs font-bold text-offwhite">
-                  +13
-                </div>
-              </div>
 
               {/* Coupon reminder banner */}
               <div className="bg-acid/10 border border-acid/30 rounded-2xl p-4 mb-6">
                 <span className="text-[10px] font-black text-acid uppercase tracking-wider block mb-1">
-                  STUDENT DISCOUNT ACTIVE
+                  STUDENT PROMO CODE
                 </span>
                 <p className="text-xs text-offwhite font-bold">
                   Use promo code <span className="bg-acid text-charcoal-950 px-1.5 py-0.5 rounded font-black">ONLYHIKES50</span> at checkout for ₹50 off.
@@ -448,14 +586,14 @@ export default function TrekDetailPage() {
         </div>
       </div>
 
-      {/* ==================================================================== */}
       {/* STICKY MOBILE BOOK NOW BAR */}
-      {/* ==================================================================== */}
       <div className="fixed bottom-0 inset-x-0 z-40 lg:hidden bg-charcoal-950/95 backdrop-blur-xl border-t border-white/10 p-4 shadow-2xl flex items-center justify-between gap-4">
         <div>
-          <div className="flex items-baseline gap-1">
-            <span className="font-display font-black text-2xl text-offwhite">₹{hike.price}</span>
-            <span className="text-[10px] text-muted">/ person</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display font-black text-2xl text-offwhite">₹{sellingPrice}</span>
+            {originalPrice > sellingPrice && (
+              <span className="text-xs text-muted line-through">₹{originalPrice}</span>
+            )}
           </div>
           <span className="text-[10px] text-acid font-bold uppercase tracking-wider block">
             {remainingSeats} seats left

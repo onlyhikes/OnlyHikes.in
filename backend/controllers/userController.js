@@ -1,54 +1,60 @@
 // ====================================================================
 // ONLYHIKES.IN — USER & STUDENT PROFILE CONTROLLER
-// Handles student portal, referral "Give ₹50. Get ₹50.", and saved trails
+// Real profile, real bookings, and saved hikes (Zero referrals)
 // ====================================================================
 
-const mockStore = require('../services/mockDataService');
-const { supabaseAdmin, isConfigured } = require('../services/supabaseService');
+const { mockDataService } = require('../services/mockDataService');
+const { supabase, supabaseAdmin, isConfigured } = require('../services/supabaseService');
 
 /**
- * Get student profile with bookings, referrals, and rewards
+ * Get student profile with real bookings and saved hikes
  */
 async function getProfile(req, res, next) {
   try {
-    const userId = req.user ? req.user.id : 'user-sample-01';
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
 
     let userBookings = [];
     let profileData = null;
+    let savedHikes = [];
 
     if (isConfigured && supabaseAdmin) {
-      const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', userId).single();
+      const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', userId).maybeSingle();
       profileData = profile;
 
-      const { data: bData } = await supabaseAdmin.from('bookings').select('*, hikes(*)').eq('user_id', userId);
+      const { data: bData } = await supabaseAdmin
+        .from('bookings')
+        .select('*, hikes(title, date, time, poster_url, slug)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
       userBookings = bData || [];
+
+      const { data: sData } = await supabaseAdmin
+        .from('saved_hikes')
+        .select('hike_id, hikes(*)')
+        .eq('user_id', userId);
+      savedHikes = (sData || []).map(s => s.hikes).filter(Boolean);
     } else {
-      profileData = mockStore.getUsers().find(u => u.id === userId) || mockStore.getUsers()[0];
-      userBookings = mockStore.bookings.filter(b => b.user_id === userId);
+      profileData = mockDataService.users.find(u => u.id === userId) || {
+        id: userId,
+        full_name: 'Student Adventurer',
+        email: 'student@onlyhikes.in',
+        phone: '+91 98290 12345',
+        college: 'MNIT Jaipur',
+        city: 'Jaipur'
+      };
+      userBookings = mockDataService.bookings.filter(b => b.user_id === userId);
+      savedHikes = mockDataService.getSavedHikes(userId);
     }
 
     return res.json({
       success: true,
       data: {
-        profile: profileData || {
-          id: userId,
-          full_name: 'Jaipur Adventurer',
-          email: 'student@onlyhikes.in',
-          phone: '+91 98290 12345',
-          college: 'MNIT Jaipur',
-          city: 'Jaipur',
-          referral_code: 'EXPLORE50',
-          referral_count: 2,
-          rewards_earned: 100
-        },
+        profile: profileData,
         bookings: userBookings,
-        referral_stats: {
-          code: profileData?.referral_code || 'EXPLORE50',
-          offer: 'Give ₹50. Get ₹50.',
-          successful_referrals: profileData?.referral_count || 2,
-          rewards_earned: profileData?.rewards_earned || 100,
-          pending_payouts: 0
-        }
+        saved_hikes: savedHikes
       }
     });
   } catch (err) {
@@ -61,7 +67,11 @@ async function getProfile(req, res, next) {
  */
 async function updateProfile(req, res, next) {
   try {
-    const userId = req.user ? req.user.id : 'user-sample-01';
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Authentication required.' });
+    }
+
     const { full_name, phone, college, city } = req.body;
 
     if (isConfigured && supabaseAdmin) {
@@ -75,37 +85,60 @@ async function updateProfile(req, res, next) {
       return res.json({ success: true, data });
     }
 
-    const u = mockStore.users.find(x => x.id === userId);
-    if (u) {
-      Object.assign(u, { full_name, phone, college, city });
-      return res.json({ success: true, data: u });
-    }
-
-    return res.json({ success: true, data: { id: userId, full_name, phone, college, city } });
+    const updated = {
+      id: userId,
+      full_name,
+      phone,
+      college,
+      city
+    };
+    return res.json({ success: true, data: updated });
   } catch (err) {
     next(err);
   }
 }
 
 /**
- * Explore Jaipur list
+ * Toggle saved hike for current user
  */
-function getExploreItems(req, res) {
-  const items = mockStore.getExploreItems();
-  return res.json({ success: true, data: items });
-}
+async function toggleSaveHike(req, res, next) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Please log in to save hikes.' });
+    }
 
-/**
- * Student Reviews list
- */
-function getReviews(req, res) {
-  const reviews = mockStore.getReviews();
-  return res.json({ success: true, data: reviews });
+    const { hike_id } = req.body;
+    if (!hike_id) {
+      return res.status(400).json({ success: false, message: 'Hike ID is required.' });
+    }
+
+    if (isConfigured && supabaseAdmin) {
+      const { data: existing } = await supabaseAdmin
+        .from('saved_hikes')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('hike_id', hike_id)
+        .maybeSingle();
+
+      if (existing) {
+        await supabaseAdmin.from('saved_hikes').delete().eq('id', existing.id);
+        return res.json({ success: true, saved: false, message: 'Hike removed from saved list.' });
+      } else {
+        await supabaseAdmin.from('saved_hikes').insert([{ user_id: userId, hike_id }]);
+        return res.json({ success: true, saved: true, message: 'Hike saved to your profile.' });
+      }
+    }
+
+    const result = mockDataService.toggleSavedHike(userId, hike_id);
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    next(err);
+  }
 }
 
 module.exports = {
   getProfile,
   updateProfile,
-  getExploreItems,
-  getReviews
+  toggleSaveHike
 };

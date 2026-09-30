@@ -4,6 +4,6 @@ const adminController = require('../controllers/adminController');
 const { requireAdmin } = require('../middleware/auth');
 
 router.get('/overview', requireAdmin, adminController.getOverview);
-router.get('/export-csv', requireAdmin, adminController.exportBookingsCsv);
+router.get('/users', requireAdmin, adminController.getAllUsers);
 
 module.exports = router;

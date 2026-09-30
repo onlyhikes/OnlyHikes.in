@@ -4,17 +4,13 @@ import Link from 'next/link';
 import {
   User,
   Ticket,
-  Calendar,
-  Gift,
   Bookmark,
-  Star,
-  Copy,
-  Check,
   MapPin,
   Clock,
-  Sparkles,
   ExternalLink,
-  MessageSquare
+  ShieldCheck,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import Button from '../../components/ui/Button';
@@ -23,10 +19,9 @@ import { useAuth } from '../../context/AuthContext';
 import { getUserProfile, updateUserProfile } from '../../lib/api';
 
 export default function StudentAccountPage() {
-  const { user, profile: authProfile, loginAsDemoStudent } = useAuth();
+  const { user } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [activeTab, setActiveTab] = useState('bookings');
-  const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     full_name: '',
@@ -35,9 +30,11 @@ export default function StudentAccountPage() {
     city: 'Jaipur'
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      setLoading(true);
       try {
         const res = await getUserProfile();
         if (res.data) {
@@ -52,19 +49,12 @@ export default function StudentAccountPage() {
         }
       } catch (err) {
         console.error('Account data error:', err);
+      } finally {
+        setLoading(false);
       }
     }
     loadData();
   }, [user]);
-
-  const handleCopyCode = () => {
-    const code = profileData?.referral_stats?.code || 'EXPLORE50';
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -80,77 +70,61 @@ export default function StudentAccountPage() {
 
   const tabs = [
     { id: 'bookings', label: 'My Bookings', icon: Ticket },
-    { id: 'referrals', label: 'Refer & Earn', icon: Gift },
-    { id: 'profile', label: 'Profile Settings', icon: User },
     { id: 'saved', label: 'Saved Hikes', icon: Bookmark },
+    { id: 'profile', label: 'Profile Settings', icon: User },
   ];
 
-  const profile = profileData?.profile || authProfile || {
-    full_name: 'Aarav Sharma',
-    email: 'aarav.sharma@mnit.ac.in',
-    phone: '+91 98290 12345',
-    college: 'MNIT Jaipur · CSE \'25',
+  const profile = profileData?.profile || (user ? {
+    full_name: user.full_name || 'Hiker Student',
+    email: user.email || '',
+    phone: user.phone || '',
+    college: user.college || 'Jaipur College',
     city: 'Jaipur'
-  };
+  } : null);
 
-  const bookings = profileData?.bookings || [
-    {
-      id: 'bk-demo-101',
-      booking_ref: 'OH-2026-8921',
-      hike_title: 'NAHARGARH SUNRISE HIKE',
-      hike_date: 'Sunday, 4 October',
-      seats_count: 2,
-      total_amount: 598.00,
-      payment_status: 'paid',
-      pickup_title: 'WTP / Gaurav Tower (04:45 AM)',
-      whatsapp_group_url: process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'
-    }
-  ];
-
-  const referral = profileData?.referral_stats || {
-    code: 'AARAV50',
-    offer: 'Give ₹50. Get ₹50.',
-    successful_referrals: 3,
-    rewards_earned: 150
-  };
+  const bookings = profileData?.bookings || [];
+  const savedHikes = profileData?.saved_hikes || [];
 
   return (
     <Layout>
       <Head>
-        <title>Student Account — OnlyHikes.in</title>
+        <title>Student Portal & Bookings — OnlyHikes.in</title>
+        <meta name="description" content="View your verified expedition passes, pickup times, and profile settings." />
       </Head>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
-        {/* Profile Header Card */}
-        <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+        {/* Profile Card Header */}
+        <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 md:p-8 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-acid text-charcoal-950 flex items-center justify-center font-display font-black text-2xl shadow-acid-sm shrink-0">
-              {profile.full_name ? profile.full_name[0].toUpperCase() : 'U'}
+            <div className="w-16 h-16 rounded-2xl bg-acid/20 border-2 border-acid text-acid font-display font-black text-2xl flex items-center justify-center shrink-0">
+              {(profile?.full_name || 'S')[0]?.toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-display font-black text-2xl sm:text-3xl text-offwhite">
-                  {profile.full_name || 'Jaipur Adventurer'}
+                <h1 className="font-display font-black text-2xl text-offwhite">
+                  {profile?.full_name || 'Jaipur Student'}
                 </h1>
-                <Badge variant="acid" size="xs">Student Verified</Badge>
+                <Badge variant="acid" size="xs">
+                  Verified Hiker
+                </Badge>
               </div>
-              <p className="text-muted text-xs sm:text-sm mt-0.5">
-                {profile.college || 'MNIT Jaipur'} • {profile.city || 'Jaipur'}
+              <p className="text-muted text-xs mt-1">
+                {profile?.college || 'Student'} • {profile?.email || 'Logged In'}
               </p>
-              <p className="text-[11px] text-muted/70">{profile.email}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-charcoal-850 border border-white/10 px-4 py-2.5 rounded-2xl text-center">
-              <span className="text-[10px] text-muted font-bold uppercase tracking-wider block">Wallet Rewards</span>
-              <span className="font-display font-black text-lg text-acid">₹{referral.rewards_earned}</span>
-            </div>
+            <Link href="/hikes">
+              <Button variant="acid" size="sm">
+                Book Next Expedition →
+              </Button>
+            </Link>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-white/10 pb-4 mb-8 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-2 mb-8 border-b border-white/10 pb-4 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -158,9 +132,9 @@ export default function StudentAccountPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shrink-0 transition ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                   active
-                    ? 'bg-acid text-charcoal-950 font-black shadow-acid-sm'
+                    ? 'bg-acid text-charcoal-950 shadow-acid-sm'
                     : 'bg-charcoal-900 text-muted hover:text-offwhite hover:bg-charcoal-800'
                 }`}
               >
@@ -171,196 +145,170 @@ export default function StudentAccountPage() {
           })}
         </div>
 
-        {/* Tab Content */}
+        {/* Tab 1: Bookings */}
         {activeTab === 'bookings' && (
-          <div className="space-y-6">
-            <h2 className="font-display font-black text-xl text-offwhite">
-              YOUR UPCOMING & PAST EXPEDITIONS
-            </h2>
-
-            {bookings.length > 0 ? (
-              <div className="space-y-4">
-                {bookings.map((b) => (
-                  <div
-                    key={b.id || b.booking_ref}
-                    className="bg-charcoal-900 border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-acid/30 transition"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black text-acid uppercase tracking-wider">
-                          REF: {b.booking_ref}
-                        </span>
-                        <Badge variant={b.payment_status === 'paid' ? 'success' : 'warning'} size="xs">
-                          {b.payment_status === 'paid' ? '✓ Confirmed' : 'Pending Payment'}
-                        </Badge>
-                      </div>
-
-                      <h3 className="font-display font-black text-lg text-offwhite">
-                        {b.hike_title || 'NAHARGARH SUNRISE HIKE'}
-                      </h3>
-
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-muted">
-                        <span className="flex items-center gap-1 text-offwhite">
-                          <Calendar className="w-3.5 h-3.5 text-acid" /> {b.hike_date || 'Sunday, 4 October'}
-                        </span>
-                        <span>•</span>
-                        <span>{b.seats_count} {b.seats_count === 1 ? 'seat' : 'seats'}</span>
-                        <span>•</span>
-                        <span className="font-bold text-offwhite">₹{b.total_amount}</span>
-                      </div>
-
-                      <div className="text-xs text-muted flex items-center gap-1 pt-1">
-                        <MapPin className="w-3.5 h-3.5 text-acid shrink-0" />
-                        <span>Pickup: <strong className="text-offwhite">{b.pickup_title}</strong></span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      <a
-                        href={b.whatsapp_group_url || process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 px-4 py-2.5 rounded-xl text-xs font-bold transition"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        <span>WhatsApp Group</span>
-                      </a>
-                      <Link href={`/booking/confirmation/${b.booking_ref || b.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Pass Ticket
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+          <div className="space-y-4">
+            {bookings.length === 0 ? (
+              <div className="bg-charcoal-900 border border-dashed border-white/10 rounded-3xl p-16 text-center">
+                <Ticket className="w-12 h-12 text-muted/30 mx-auto mb-3" />
+                <h3 className="font-display font-black text-lg text-offwhite">No Bookings Yet</h3>
+                <p className="text-muted text-xs max-w-sm mx-auto mt-1 mb-6">
+                  You haven't reserved any hikes yet. Explore this Sunday's expeditions on the Aravalis!
+                </p>
+                <Link href="/hikes">
+                  <Button variant="acid" size="sm">
+                    Browse Upcoming Hikes →
+                  </Button>
+                </Link>
               </div>
             ) : (
-              <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-12 text-center max-w-md mx-auto">
-                <Ticket className="w-12 h-12 text-muted mx-auto mb-3" />
-                <h3 className="font-display font-black text-lg text-offwhite mb-2">No Bookings Yet</h3>
-                <p className="text-muted text-xs mb-6">Don't spend your weekend indoors. Pick a trail!</p>
-                <Link href="/hikes"><Button variant="acid" size="sm">Explore Trails</Button></Link>
+              bookings.map((b) => (
+                <div
+                  key={b.id}
+                  className="bg-charcoal-900 border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-white/20 transition"
+                >
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-mono text-xs font-bold text-acid bg-acid/10 px-2 py-0.5 rounded border border-acid/20">
+                        {b.booking_ref}
+                      </span>
+                      <Badge variant={b.payment_status === 'paid' ? 'acid' : 'flame'} size="xs">
+                        {b.payment_status === 'paid' ? 'Confirmed' : 'Pending Payment'}
+                      </Badge>
+                    </div>
+
+                    <h3 className="font-display font-black text-xl text-offwhite">
+                      {b.hikes?.title || b.hike_title || 'Aravali Expedition'}
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted mt-2">
+                      <span className="flex items-center gap-1 text-offwhite">
+                        <Clock className="w-3.5 h-3.5 text-acid" /> {b.hikes?.time || '5:30 AM'}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-muted" /> {b.pickup_locations?.title || 'Mansarovar Metro'}
+                      </span>
+                      <span>• {b.seats_count || 1} Seat(s)</span>
+                      <span className="font-bold text-offwhite">• ₹{b.total_amount}</span>
+                    </div>
+                  </div>
+
+                  <Link href={`/booking/confirmation/${b.booking_ref || b.id}`}>
+                    <Button variant="outline" size="sm">
+                      View Digital Pass →
+                    </Button>
+                  </Link>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Tab 2: Saved Hikes */}
+        {activeTab === 'saved' && (
+          <div>
+            {savedHikes.length === 0 ? (
+              <div className="bg-charcoal-900 border border-dashed border-white/10 rounded-3xl p-16 text-center">
+                <Bookmark className="w-12 h-12 text-muted/30 mx-auto mb-3" />
+                <h3 className="font-display font-black text-lg text-offwhite">No Saved Hikes</h3>
+                <p className="text-muted text-xs max-w-sm mx-auto mt-1 mb-6">
+                  Bookmark expeditions you're interested in by tapping the bookmark icon on any hike details page.
+                </p>
+                <Link href="/hikes">
+                  <Button variant="acid" size="sm">
+                    Browse Hikes Calendar →
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {savedHikes.map((item) => (
+                  <div key={item.id} className="bg-charcoal-900 border border-white/10 rounded-2xl p-5 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-display font-black text-base text-offwhite">{item.hikes?.title}</h4>
+                      <p className="text-muted text-xs mt-0.5">{item.hikes?.date} • ₹{item.hikes?.selling_price || 299}</p>
+                    </div>
+                    <Link href={`/hikes/${item.hikes?.slug || item.hike_id}`}>
+                      <Button variant="acid" size="xs">View Trek →</Button>
+                    </Link>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Tab: Referrals */}
-        {activeTab === 'referrals' && (
-          <div className="max-w-2xl mx-auto space-y-8">
-            <div className="bg-gradient-to-br from-charcoal-900 to-charcoal-850 border border-white/15 rounded-3xl p-8 text-center shadow-xl">
-              <span className="text-acid text-xs font-black uppercase tracking-widest block mb-2">
-                INVITE YOUR FRIENDS
-              </span>
-              <h2 className="font-display font-black text-3xl sm:text-4xl text-offwhite tracking-tight mb-2">
-                "GIVE ₹50. GET ₹50."
-              </h2>
-              <p className="text-muted text-xs sm:text-sm max-w-md mx-auto mb-8">
-                Share your personal code with college friends. They get ₹50 off their first hike pass, and you get ₹50 credited straight to your OnlyHikes wallet!
-              </p>
-
-              {/* Code Box */}
-              <div className="bg-charcoal-950 border border-acid/40 rounded-2xl p-4 max-w-sm mx-auto flex items-center justify-between mb-8 shadow-acid-sm">
-                <div>
-                  <span className="text-[10px] text-muted uppercase tracking-wider block font-bold">Your Referral Code</span>
-                  <span className="font-display font-black text-2xl text-acid">{referral.code}</span>
-                </div>
-                <button
-                  onClick={handleCopyCode}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-acid hover:bg-acid-400 text-charcoal-950 font-black text-xs uppercase rounded-xl transition shadow-md"
-                >
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  <span>{copied ? 'Copied!' : 'Copy Code'}</span>
-                </button>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-                <div className="bg-charcoal-800 p-4 rounded-2xl border border-white/5">
-                  <span className="text-[10px] text-muted uppercase tracking-wider font-bold block">Friends Joined</span>
-                  <span className="font-display font-black text-2xl text-offwhite">{referral.successful_referrals}</span>
-                </div>
-                <div className="bg-charcoal-800 p-4 rounded-2xl border border-white/5">
-                  <span className="text-[10px] text-muted uppercase tracking-wider font-bold block">Rewards Earned</span>
-                  <span className="font-display font-black text-2xl text-acid">₹{referral.rewards_earned}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab: Profile Settings */}
+        {/* Tab 3: Profile Settings */}
         {activeTab === 'profile' && (
-          <div className="max-w-xl mx-auto">
-            <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 sm:p-8">
-              <h2 className="font-display font-black text-xl text-offwhite mb-6">
-                STUDENT PROFILE DETAILS
-              </h2>
+          <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-6 md:p-8 max-w-2xl">
+            <h3 className="font-display font-black text-xl text-offwhite mb-4">
+              Student Profile Details
+            </h3>
 
-              {saveSuccess && (
-                <div className="mb-4 p-3 bg-emerald-950/70 border border-emerald-500/40 rounded-xl text-xs font-bold text-emerald-300">
-                  Profile updated successfully!
-                </div>
-              )}
+            {saveSuccess && (
+              <div className="p-3 bg-acid/10 border border-acid/30 rounded-xl text-xs font-bold text-acid flex items-center gap-2 mb-6">
+                <CheckCircle className="w-4 h-4 shrink-0" />
+                <span>Profile updated successfully!</span>
+              </div>
+            )}
 
-              <form onSubmit={handleSaveProfile} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-muted mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={editForm.full_name}
-                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                    className="w-full bg-charcoal-800 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-offwhite focus:outline-none focus:border-acid"
-                  />
-                </div>
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                  className="w-full bg-charcoal-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-offwhite focus:border-acid outline-none transition"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-muted mb-1">Phone / WhatsApp</label>
-                  <input
-                    type="tel"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full bg-charcoal-800 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-offwhite focus:outline-none focus:border-acid"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
+                  WhatsApp Contact Number
+                </label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  placeholder="+91 98290 12345"
+                  className="w-full bg-charcoal-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-offwhite focus:border-acid outline-none transition"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-muted mb-1">College / University</label>
-                  <input
-                    type="text"
-                    value={editForm.college}
-                    onChange={(e) => setEditForm({ ...editForm, college: e.target.value })}
-                    className="w-full bg-charcoal-800 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-offwhite focus:outline-none focus:border-acid"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
+                  College / University
+                </label>
+                <input
+                  type="text"
+                  value={editForm.college}
+                  onChange={(e) => setEditForm({ ...editForm, college: e.target.value })}
+                  placeholder="e.g. MNIT Jaipur, Manipal University Jaipur"
+                  className="w-full bg-charcoal-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-offwhite focus:border-acid outline-none transition"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-muted mb-1">City</label>
-                  <input
-                    type="text"
-                    value={editForm.city}
-                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                    className="w-full bg-charcoal-800 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-offwhite focus:outline-none focus:border-acid"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
+                  City
+                </label>
+                <input
+                  type="text"
+                  value={editForm.city}
+                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                  className="w-full bg-charcoal-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-offwhite focus:border-acid outline-none transition"
+                />
+              </div>
 
-                <Button type="submit" variant="acid" size="md" className="w-full font-black uppercase">
-                  Save Changes
+              <div className="pt-4 flex justify-end">
+                <Button type="submit" variant="acid" size="md">
+                  Save Profile Changes
                 </Button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Tab: Saved Hikes */}
-        {activeTab === 'saved' && (
-          <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-10 text-center max-w-md mx-auto">
-            <Bookmark className="w-10 h-10 text-acid mx-auto mb-3" />
-            <h3 className="font-display font-black text-lg text-offwhite mb-2">Saved Trails</h3>
-            <p className="text-muted text-xs mb-6">You have saved Nahargarh Sunrise Hike to your bucket list.</p>
-            <Link href="/hikes/nahargarh-sunrise-hike">
-              <Button variant="outline" size="sm">View Saved Hike</Button>
-            </Link>
+              </div>
+            </form>
           </div>
         )}
       </div>

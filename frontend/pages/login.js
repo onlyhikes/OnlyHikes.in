@@ -45,7 +45,7 @@ export default function LoginPage() {
               WELCOME BACK
             </h1>
             <p className="text-muted text-xs mt-1">
-              Sign in to manage bookings, cast destination votes & earn referral perks.
+              Sign in to manage bookings, view digital passes, and cast destination votes.
             </p>
           </div>
 

@@ -3,10 +3,10 @@
 // Strict seat availability and server-side pricing validation
 // ====================================================================
 
-const mockStore = require('../services/mockDataService');
+const { mockDataService } = require('../services/mockDataService');
 const { validateSeatAvailability } = require('../utils/seatValidator');
 const { validateAndCalculateCoupon } = require('../utils/couponValidator');
-const { supabaseAdmin, isConfigured } = require('../services/supabaseService');
+const { supabase, supabaseAdmin, isConfigured } = require('../services/supabaseService');
 
 /**
  * Create a new booking
@@ -44,17 +44,21 @@ async function createBooking(req, res, next) {
       if (error || !data) return res.status(404).json({ success: false, message: 'Hike not found.' });
       hike = data;
     } else {
-      hike = mockStore.getHikeByIdOrSlug(hike_id);
+      hike = mockDataService.getHikeById(hike_id) || mockDataService.getHikeBySlug(hike_id);
       if (!hike) return res.status(404).json({ success: false, message: 'Hike not found.' });
     }
 
-    const seatCheck = validateSeatAvailability(hike, seats);
-    if (!seatCheck.available) {
-      return res.status(400).json({ success: false, message: seatCheck.message });
+    const availableSeats = hike.total_seats - (hike.booked_seats || 0);
+    if (seats > availableSeats) {
+      return res.status(400).json({
+        success: false,
+        message: `Only ${availableSeats} seat(s) remaining for this hike.`
+      });
     }
 
     // 2. Calculate Pricing Server-Side
-    const originalAmount = hike.price * seats;
+    const unitPrice = Number(hike.selling_price || hike.price || 0);
+    const originalAmount = unitPrice * seats;
     let discountAmount = 0;
     let appliedCoupon = null;
 
@@ -66,10 +70,10 @@ async function createBooking(req, res, next) {
           .select('*')
           .ilike('code', coupon_code.trim())
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
         couponData = data;
       } else {
-        couponData = mockStore.getCouponByCode(coupon_code);
+        couponData = mockDataService.getCouponByCode(coupon_code);
       }
 
       if (couponData) {
@@ -86,30 +90,39 @@ async function createBooking(req, res, next) {
       } else {
         return res.status(400).json({
           success: false,
-          message: 'Invalid coupon code.'
+          message: 'Invalid promo code.'
         });
       }
     }
 
     const totalAmount = Math.max(0, originalAmount - discountAmount);
 
-    // 3. Resolve Pickup Location title
+    // 3. Resolve Pickup Location title & WhatsApp link
     let pickupTitle = 'WTP / Malviya Nagar';
     let pickupTime = hike.time;
     if (pickup_location_id) {
       if (isConfigured && supabaseAdmin) {
-        const { data: pData } = await supabaseAdmin.from('pickup_locations').select('*').eq('id', pickup_location_id).single();
+        const { data: pData } = await supabaseAdmin.from('pickup_locations').select('*').eq('id', pickup_location_id).maybeSingle();
         if (pData) {
-          pickupTitle = `${pData.title} (${pData.landmark})`;
+          pickupTitle = `${pData.title} (${pData.landmark || ''})`;
           pickupTime = pData.pickup_time;
         }
       } else {
-        const pData = mockStore.getPickups(hike.id).find(p => p.id === pickup_location_id);
+        const pData = mockDataService.getPickups().find(p => p.id === pickup_location_id);
         if (pData) {
-          pickupTitle = `${pData.title} (${pData.landmark})`;
+          pickupTitle = `${pData.title} (${pData.landmark || ''})`;
           pickupTime = pData.pickup_time;
         }
       }
+    }
+
+    // Fetch dynamic WhatsApp Community URL from brand settings
+    let whatsappUrl = 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27';
+    if (isConfigured && supabaseAdmin) {
+      const { data: bData } = await supabaseAdmin.from('brand_settings').select('whatsapp_community_url').limit(1).maybeSingle();
+      if (bData?.whatsapp_community_url) whatsappUrl = bData.whatsapp_community_url;
+    } else {
+      whatsappUrl = mockDataService.getBrandSettings().whatsapp_community_url;
     }
 
     const bookingRef = `OH-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
@@ -121,11 +134,9 @@ async function createBooking(req, res, next) {
       student_name,
       student_email,
       student_phone,
-      student_college: student_college || 'Jaipur Student',
+      student_college: student_college || 'Jaipur College Student',
       seats_count: seats,
       pickup_location_id: pickup_location_id || null,
-      pickup_title: pickupTitle,
-      pickup_time: pickupTime,
       coupon_id: appliedCoupon ? appliedCoupon.id : null,
       original_amount: originalAmount,
       discount_amount: discountAmount,
@@ -133,21 +144,36 @@ async function createBooking(req, res, next) {
       payment_status: 'pending', // Pending real gateway payment!
       payment_id: null,
       notes: notes || '',
-      whatsapp_group_url: process.env.DEFAULT_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'
+      created_at: new Date().toISOString()
     };
 
     if (isConfigured && supabaseAdmin) {
       const { data, error } = await supabaseAdmin.from('bookings').insert(bookingPayload).select().single();
       if (error) throw error;
+
+      // Update booked_seats on the hike
+      await supabaseAdmin.from('hikes').update({ booked_seats: (hike.booked_seats || 0) + seats }).eq('id', hike.id);
+
+      // If coupon used, increment current_uses
+      if (appliedCoupon) {
+        await supabaseAdmin.from('coupons').update({ current_uses: (appliedCoupon.current_uses || 0) + 1 }).eq('id', appliedCoupon.id);
+      }
+
       return res.status(201).json({
         success: true,
-        data,
+        data: { ...data, pickup_title: pickupTitle, pickup_time: pickupTime, whatsapp_group_url: whatsappUrl },
         message: 'Booking initiated. Proceed to payment.'
       });
     }
 
     // Local Store
-    const savedBooking = mockStore.createBooking(bookingPayload);
+    const savedBooking = mockDataService.createBooking({
+      ...bookingPayload,
+      pickup_title: pickupTitle,
+      pickup_time: pickupTime,
+      whatsapp_group_url: whatsappUrl
+    });
+
     return res.status(201).json({
       success: true,
       data: savedBooking,
@@ -165,16 +191,16 @@ async function getBookingById(req, res, next) {
   try {
     const { id } = req.params;
 
-    if (isConfigured && supabaseAdmin) {
+    if (isConfigured && supabase) {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      let query = supabaseAdmin.from('bookings').select('*, hikes(title, date, time, poster_url), pickup_locations(title, landmark, pickup_time)');
+      let query = supabase.from('bookings').select('*, hikes(title, date, time, poster_url), pickup_locations(title, landmark, pickup_time)');
       query = isUUID ? query.eq('id', id) : query.eq('booking_ref', id);
-      const { data, error } = await query.single();
+      const { data, error } = await query.maybeSingle();
       if (error || !data) return res.status(404).json({ success: false, message: 'Booking not found.' });
       return res.json({ success: true, data });
     }
 
-    const booking = mockStore.getBookingById(id);
+    const booking = mockDataService.getBookingById(id);
     if (!booking) {
       return res.status(404).json({ success: false, message: 'Booking not found.' });
     }
@@ -193,16 +219,16 @@ async function getAllBookings(req, res, next) {
     const { hike_id, payment_status, search } = req.query;
 
     if (isConfigured && supabaseAdmin) {
-      let query = supabaseAdmin.from('bookings').select('*, hikes(title, date, time)');
+      let query = supabaseAdmin.from('bookings').select('*, hikes(title, date, time), pickup_locations(title, landmark, pickup_time)');
       if (hike_id) query = query.eq('hike_id', hike_id);
       if (payment_status) query = query.eq('payment_status', payment_status);
-      if (search) query = query.ilike('student_name', `%${search}%`);
+      if (search) query = query.or(`student_name.ilike.%${search}%,student_email.ilike.%${search}%,booking_ref.ilike.%${search}%`);
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
-      return res.json({ success: true, data });
+      return res.json({ success: true, data: data || [] });
     }
 
-    const bookings = mockStore.getBookings({ hike_id, payment_status, search });
+    const bookings = mockDataService.getBookings({ hikeId: hike_id, paymentStatus: payment_status, search });
     return res.json({ success: true, data: bookings });
   } catch (err) {
     next(err);

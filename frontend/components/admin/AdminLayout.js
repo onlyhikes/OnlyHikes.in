@@ -6,9 +6,14 @@ import {
   Mountain,
   Ticket,
   Bus,
-  Vote,
   Tag,
   Users,
+  FileText,
+  Image,
+  MapPin,
+  MessageSquare,
+  Settings,
+  Globe,
   ArrowLeft,
   ShieldAlert,
   Lock,
@@ -28,7 +33,6 @@ export default function AdminLayout({ children, title, subtitle, action }) {
   const MASTER_KEY = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY || 'onlyhikes_jaipur_admin_2026';
 
   useEffect(() => {
-    // Check if previously unlocked
     const stored = localStorage.getItem('onlyhikes_admin_key');
     if (stored === MASTER_KEY) {
       setIsUnlocked(true);
@@ -61,7 +65,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     );
   }
 
-  // Security Gate if not unlocked
+  // Security Gate
   if (!isUnlocked) {
     return (
       <div className="min-h-screen bg-charcoal-950 text-offwhite flex items-center justify-center p-4">
@@ -73,20 +77,20 @@ export default function AdminLayout({ children, title, subtitle, action }) {
               <Lock className="w-7 h-7" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-flame bg-flame/10 px-3 py-1 rounded-full border border-flame/20">
-              Restricted Area
+              Admin CMS Control Center
             </span>
             <h1 className="font-display font-black text-2xl text-offwhite mt-3">
               COORDINATOR OPS
             </h1>
             <p className="text-muted text-xs mt-1">
-              This portal is restricted to OnlyHikes organizers. Enter your secret passcode to access bookings, revenue, and hike controls.
+              Authorized coordinators only. Enter master passcode to control hikes, live bookings, content CMS, brand, and media.
             </p>
           </div>
 
           <form onSubmit={handleUnlock} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
-                Admin Passcode
+                Admin Master Passcode
               </label>
               <div className="relative">
                 <KeyRound className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -94,7 +98,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
                   type="password"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
-                  placeholder="Enter admin passcode"
+                  placeholder="Enter passcode"
                   required
                   autoFocus
                   className="w-full bg-charcoal-950 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-offwhite placeholder:text-muted/40 focus:outline-none focus:border-acid transition"
@@ -110,7 +114,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
             )}
 
             <Button type="submit" variant="acid" size="md" className="w-full uppercase font-black">
-              Unlock Admin Portal →
+              Unlock Coordinator Portal →
             </Button>
           </form>
 
@@ -124,69 +128,93 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     );
   }
 
-  const navItems = [
-    { label: 'Overview', href: '/admin', icon: LayoutDashboard },
-    { label: 'Hikes & Posters', href: '/admin/hikes', icon: Mountain },
-    { label: 'Bookings & Manifest', href: '/admin/bookings', icon: Ticket },
-    { label: 'Pickup Points', href: '/admin/pickups', icon: Bus },
-    { label: 'Community Voting', href: '/admin/voting', icon: Vote },
-    { label: 'Coupons', href: '/admin/coupons', icon: Tag },
-    { label: 'Registered Students', href: '/admin/users', icon: Users },
+  const navSections = [
+    {
+      heading: 'Operations',
+      items: [
+        { label: 'Overview', href: '/admin', icon: LayoutDashboard },
+        { label: 'Hikes & Media', href: '/admin/hikes', icon: Mountain },
+        { label: 'Bookings & Manifest', href: '/admin/bookings', icon: Ticket },
+        { label: 'Pickup Points', href: '/admin/pickups', icon: Bus },
+        { label: 'Discount Coupons', href: '/admin/coupons', icon: Tag },
+        { label: 'Registered Students', href: '/admin/users', icon: Users },
+      ]
+    },
+    {
+      heading: 'Content & Brand CMS',
+      items: [
+        { label: 'Site Content CMS', href: '/admin/content', icon: FileText },
+        { label: 'Media Library', href: '/admin/media', icon: Image },
+        { label: 'Route Waypoints', href: '/admin/routes', icon: MapPin },
+        { label: 'Student Reviews', href: '/admin/reviews', icon: MessageSquare },
+        { label: 'Brand & Socials', href: '/admin/brand', icon: Settings },
+        { label: 'SEO Metadata', href: '/admin/seo', icon: Globe },
+      ]
+    }
   ];
 
   return (
     <div className="min-h-screen bg-charcoal-950 text-offwhite flex flex-col md:flex-row">
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-charcoal-900 border-b md:border-b-0 md:border-r border-white/10 flex flex-col shrink-0">
-        {/* Brand */}
+        {/* Brand Header */}
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-acid flex items-center justify-center font-black text-charcoal-950 text-xs">
               ▲
             </div>
             <div>
-              <span className="font-display font-black text-lg text-offwhite">
+              <span className="font-display font-black text-lg text-offwhite tracking-tight">
                 ONLYHIKES
               </span>
-              <span className="block text-[10px] text-flame font-bold tracking-widest uppercase">
-                Coordinator Ops
+              <span className="block text-[9px] text-acid font-bold tracking-widest uppercase">
+                Coordinator GUI CMS
               </span>
             </div>
           </Link>
-          <Link href="/" title="Back to Student Website" className="text-muted hover:text-offwhite transition">
+          <Link href="/" title="Back to Public Site" className="text-muted hover:text-offwhite transition">
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-4 space-y-1.5 flex-grow">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = router.pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
-                  active
-                    ? 'bg-acid text-charcoal-950 shadow-acid-sm'
-                    : 'text-muted hover:text-offwhite hover:bg-charcoal-800'
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+        {/* Navigation Sections */}
+        <nav className="p-4 space-y-5 flex-grow overflow-y-auto">
+          {navSections.map((section, sIdx) => (
+            <div key={sIdx}>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted/60 px-3 mb-1.5 block">
+                {section.heading}
+              </span>
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = router.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                        active
+                          ? 'bg-acid text-charcoal-950 shadow-acid-sm'
+                          : 'text-muted hover:text-offwhite hover:bg-charcoal-800'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        {/* Admin status and lock button */}
+        {/* Admin status & lock */}
         <div className="p-4 border-t border-white/10 bg-charcoal-950/60">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-emerald-400" />
-              <span className="text-xs font-bold text-offwhite">
-                Admin Authenticated
+              <span className="text-[11px] font-bold text-offwhite">
+                Admin Mode Active
               </span>
             </div>
           </div>
@@ -195,17 +223,17 @@ export default function AdminLayout({ children, title, subtitle, action }) {
             className="w-full text-center py-2 px-3 bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-500/30 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition"
           >
             <LogOut className="w-3.5 h-3.5" />
-            Lock & Logout Admin
+            Lock Portal
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <main className="flex-grow p-6 md:p-10 overflow-y-auto">
-        {/* Header */}
+        {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-white/10">
           <div>
-            <h1 className="font-display font-black text-2xl md:text-3xl text-offwhite">
+            <h1 className="font-display font-black text-2xl md:text-3xl text-offwhite tracking-tight">
               {title}
             </h1>
             {subtitle && (
@@ -217,7 +245,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
           {action && <div>{action}</div>}
         </div>
 
-        {/* Body */}
+        {/* Body Content */}
         {children}
       </main>
     </div>

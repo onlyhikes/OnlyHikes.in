@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { Search, Download, Filter, Ticket, User, MapPin, Mail, Phone, Calendar } from 'lucide-react';
+import { Search, Filter, Ticket, User, MapPin, Mail, Phone, Calendar } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
@@ -49,18 +49,7 @@ export default function AdminBookingsPage() {
   return (
     <AdminLayout
       title="PASSENGER MANIFEST & BOOKINGS"
-      subtitle="View student attendee records, verified bus pickups, and export conductor sheets"
-      action={
-        <a
-          href="http://localhost:5000/api/admin/export-csv"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-acid text-charcoal-950 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide hover:bg-acid-400 transition"
-        >
-          <Download className="w-4 h-4" />
-          <span>Export Bus Manifest CSV</span>
-        </a>
-      }
+      subtitle="View student attendee records, verified bus pickups, and emergency contact details"
     >
       <Head>
         <title>Bookings Manifest — OnlyHikes Coordinator Admin</title>

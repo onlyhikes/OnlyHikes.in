@@ -1,7 +1,133 @@
 // ====================================================================
-// ONLYHIKES.IN — HIGH-FIDELITY LOCAL IN-MEMORY DATA STORE
+// ONLYHIKES.IN — HIGH-FIDELITY IN-MEMORY PRODUCTION CMS DATA STORE
 // Used seamlessly whenever Supabase credentials are not populated
+// Pure real-data architecture: No fake bookings, no fake reviews, no referrals, no difficulty
 // ====================================================================
+
+const initialBrandSettings = {
+  id: 'b0000000-0000-0000-0000-000000000001',
+  brand_name: 'OnlyHikes',
+  logo_url: '/logo.svg',
+  favicon_url: '/favicon.ico',
+  primary_color: '#CCFF00',
+  secondary_color: '#FF5500',
+  accent_color: '#CCFF00',
+  whatsapp_community_url: 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27',
+  instagram_url: 'https://www.instagram.com/onlyhikes.in/',
+  default_og_image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+  updated_at: new Date().toISOString()
+};
+
+const initialSiteContent = {
+  hero: {
+    badge: "JAIPUR'S STUDENT ADVENTURE COMMUNITY",
+    headline_line1: "YOUR WEEKEND",
+    headline_line2: "JUST GOT WILDER.",
+    subtitle: "Don't spend your weekend indoors. Go explore.",
+    description: "Discover curated Aravali trails, secret fort viewpoints, fresh morning chai, and unforgettable weekends with college squads from across Jaipur.",
+    primary_cta_text: "EXPLORE UPCOMING HIKES →",
+    primary_cta_link: "/hikes",
+    secondary_cta_text: "JOIN WHATSAPP TRIBE",
+    secondary_cta_link: "https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27",
+    background_media_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80",
+    background_media_type: "image",
+    overlay_opacity: 75
+  },
+  why_jaipur: {
+    badge: "THE ARAVALI CAPITAL",
+    title: "WHY EXPLORE JAIPUR'S OUTDOORS?",
+    subtitle: "Behind the pink stone facades lies India's oldest geological mountain range.",
+    paragraphs: [
+      "Most students spend four years in Jaipur seeing only mall corridors, coaching lanes, and crowded cafes. But right behind the city skyline rise the Aravali ridges — rugged, ancient, and breathtaking at sunrise.",
+      "From secret step-trails behind Charan Mandir to misty canyon passes around Hathni Kund and quiet medieval ruins hidden in Alwar valley, Jaipur has some of North India's best accessible trekking terrain.",
+      "You don't need a week of vacation or an expensive flight to Himachal. A wild weekend adventure is waiting just 30 minutes from your college campus."
+    ],
+    highlights: [
+      { title: "Ancient Aravali Ridges", desc: "Billions of years old trails overlooking the Pink City panorama." },
+      { title: "Dramatic Sunrises", desc: "Watch the golden sun crest over historic battlements before the city wakes." },
+      { title: "Hidden Canyons & Stepwells", desc: "Canyon passes, natural water pools, and tucked-away ruins." }
+    ]
+  },
+  why_adventure: {
+    badge: "THE STUDENT RESET",
+    title: "WHY CHOOSE ADVENTURE?",
+    subtitle: "Trade screen fatigue and boring hostel routines for fresh Aravali ridge air.",
+    points: [
+      {
+        number: "01",
+        title: "Break The Monotony",
+        desc: "Step outside your 10x10 hostel room. Push your physical limits and start Sunday with a surge of genuine dopamine."
+      },
+      {
+        number: "02",
+        title: "Real Connections",
+        desc: "Hike with college students from MNIT, Manipal, Amity, JECRC, Poornima, and RU. Real conversations, zero pretension."
+      },
+      {
+        number: "03",
+        title: "Unfiltered Memories",
+        desc: "Golden morning light on your face, shared ginger chai at the summit, and trail stories you'll talk about all semester."
+      },
+      {
+        number: "04",
+        title: "Affordable Freedom",
+        desc: "Adventure designed specifically on a student budget. AC travel, safety marshals, food and logistics all sorted under ₹300."
+      }
+    ]
+  },
+  why_onlyhikes: {
+    badge: "OUR MISSION",
+    title: "NOT A TRAVEL AGENCY. A COMMUNITY.",
+    subtitle: "Built specifically for Jaipur's youth and college adventurers.",
+    manifesto: "Traditional travel agencies treat you like a tourist with megaphones and commercial commissions. OnlyHikes was founded by students who wanted something real: curated weekend trails, verified trek coordinators your own age, AC coach pickup from central hubs, hot breakfast, and an environment with strictly zero alcohol or commercial nonsense.",
+    pillars: [
+      { title: "Zero Pretense", desc: "Just raw trails, good people, and wild mornings." },
+      { title: "All-Inclusive Logistics", desc: "Bus pickup, drops, food, hydration, and first-aid all handled." },
+      { title: "Certified Coordinators", desc: "Trained trek marshals on every batch ensuring zero hiker gets left behind." }
+    ]
+  },
+  how_it_works: {
+    badge: "SIMPLE PROCESS",
+    title: "HOW IT WORKS",
+    subtitle: "4 simple steps to your wildest weekend reset.",
+    steps: [
+      {
+        step: "01",
+        title: "CHOOSE YOUR TRAIL",
+        desc: "Browse our curated weekend hikes. Check the route, timings, photos, and live available seats."
+      },
+      {
+        step: "02",
+        title: "BOOK YOUR PASS",
+        desc: "Select your seats, choose your nearest Jaipur pickup spot, apply your student promo code, and secure your ticket."
+      },
+      {
+        step: "03",
+        title: "WE PICK YOU UP",
+        desc: "Hop onto our comfortable AC bus at WTP Malviya Nagar or Mansarovar early Sunday morning. Meet your coordinators."
+      },
+      {
+        step: "04",
+        title: "HIKE, EAT & CONNECT",
+        desc: "Conquer the ridge trail, enjoy hot breakfast & ginger chai at the peak, take epic photos, and return refreshed by noon."
+      }
+    ]
+  },
+  announcements: {
+    is_active: true,
+    message: "🔥 Sunday Nahargarh Sunrise batch is live! AC bus pickup from WTP & Mansarovar. Limited seats remaining.",
+    link_text: "Book Pass →",
+    link_url: "/hikes"
+  },
+  footer: {
+    tagline: "YOUR WEEKEND JUST GOT WILDER.",
+    bio: "Jaipur's premier student outdoor adventure community. We organize weekend Aravali treks, sunrise runs, AC bus pickup & drops, fresh food, and community memories for college students across Jaipur.",
+    support_email: "hello@onlyhikes.in",
+    support_phone: "+91 98765 43210",
+    instagram_url: "https://www.instagram.com/onlyhikes.in/",
+    whatsapp_url: "https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27"
+  }
+};
 
 const initialHikes = [
   {
@@ -17,19 +143,22 @@ const initialHikes = [
     ],
     date: '2026-10-04',
     time: 'Sunday · 5:30 AM',
-    price: 299.00,
-    total_seats: 25,
-    booked_seats: 18,
-    difficulty: 'Moderate',
-    description: 'Start your Sunday with adrenaline instead of a hangover. We hike the secret step-trail behind Charan Mandir up to the highest ridgeline of Nahargarh. Watch golden light flood over the Pink City, enjoy hot chai and poha with 24 other young adventurers, and make memories that will make your classmates jealous.',
+    selling_price: 299.00,
+    original_price: 499.00,
+    total_seats: 30,
+    booked_seats: 0,
+    description: 'Start your Sunday with adrenaline instead of a hangover. We hike the secret step-trail behind Charan Mandir up to the highest ridgeline of Nahargarh. Watch golden light flood over the Pink City, enjoy hot chai and fresh breakfast with 25+ other young adventurers, and make memories that will make your classmates jealous.',
     included_services: [
       'AC Bus Pickup & Drop',
       'Guided Ridge Trail',
       'Hot Poha & Ginger Chai',
       'Mineral Water Refills',
       '2 Certified Trek Coordinators',
-      'First-Aid & Safety Escort'
+      'First-Aid Support'
     ],
+    food_info: 'Hot freshly cooked Poha with sev, bananas, and piping hot ginger-cardamom chai served at the summit.',
+    water_info: 'Unlimited mineral water refills provided throughout the trek.',
+    coordinators_info: '2 Certified Trek Coordinators accompanying every student batch.',
     things_to_carry: [
       'Sturdy Running/Hiking Shoes',
       'Valid College ID',
@@ -40,9 +169,15 @@ const initialHikes = [
     safety_rules: [
       'Stay in single file on rocky ridges',
       'Strictly no stepping on unstable parapets',
-      'Follow hike marshal instructions',
+      'Follow hike coordinator instructions',
       'Zero alcohol or substance tolerance'
     ],
+    featured: true,
+    background_media_url: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=1920&q=80',
+    background_media_type: 'image',
+    primary_accent: '#CCFF00',
+    secondary_accent: '#FF7326',
+    overlay_intensity: 'dark',
     is_published: true
   },
   {
@@ -56,407 +191,287 @@ const initialHikes = [
     ],
     date: '2026-10-10',
     time: 'Saturday · 9:00 PM',
-    price: 599.00,
-    total_seats: 30,
-    booked_seats: 12,
-    difficulty: 'Challenging',
-    description: 'Known as India’s most haunted enclave, Bhangarh’s rugged outskirts offer world-class Aravali bouldering and zero-light pollution stargazing. Experience acoustic jam sessions by the campfire, night trail navigation with headlamps, and breakfast by the lakeside.',
+    selling_price: 599.00,
+    original_price: 899.00,
+    total_seats: 25,
+    booked_seats: 0,
+    description: 'The ultimate night adventure for thrill-seekers. We board our AC coach in Jaipur at midnight, journey through Aravali gorges to the outer perimeter of Bhangarh, stargaze under unpolluted night skies, and witness dawn break over the 17th-century ramparts.',
     included_services: [
-      'AC Traveller Pickup & Drop',
-      'Campfire & Acoustic Session',
-      'Midnight Snacks & Hot Maggi',
-      'Headlamps & Glow Sticks',
-      '3 Experienced Coordinators',
-      'Telescope Stargazing Access'
+      'AC Coach Jaipur to Alwar & Back',
+      'Guided Valley Night Trail',
+      'Midnight Sandwiches & Hot Coffee',
+      'Morning Breakfast',
+      'Safety Escort & Stargazing'
     ],
+    food_info: 'Midnight coffee and cheese sandwiches during stargazing, followed by morning parathas on the return.',
+    water_info: 'Packaged mineral water bottles distributed for night trek and morning return.',
+    coordinators_info: '3 Coordinators including certified night navigators and female coordinator escort.',
     things_to_carry: [
-      'Warm Layers / Hoodie',
-      'Headlamp or Flashlight',
-      'Power Bank',
-      'Campus ID'
+      'Sturdy Shoes',
+      'Power Bank & Phone Torch',
+      'Warm Hoodie / Jacket',
+      'College ID Card'
     ],
     safety_rules: [
-      'Never wander alone off the trail',
-      'Stay within whistle audible range',
-      'Comply with local heritage authority boundaries'
+      'Stay strictly in the group corridor',
+      'No wandering into unlit dry wells',
+      'Listen to night marshal whistles',
+      'Strictly zero substance tolerance'
     ],
+    featured: true,
+    background_media_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=80',
+    background_media_type: 'image',
+    primary_accent: '#38BDF8',
+    secondary_accent: '#818CF8',
+    overlay_intensity: 'high_contrast',
     is_published: true
   },
   {
     id: 'a3333333-3333-3333-3333-333333333333',
     slug: 'hathni-kund-waterfall-trail',
-    title: 'HATHNI KUND FORGOTTEN VALLEY TREK',
-    subtitle: 'Canyon descent into lush monsoon pools and prehistoric Aravali rock walls.',
-    poster_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80',
+    title: 'HATHNI KUND CANYON TRAIL',
+    subtitle: 'Traverse Jaipur’s lush monsoon valley with hidden gorges and ancient stepwells.',
+    poster_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
     gallery_urls: [
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80'
+      'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80'
     ],
     date: '2026-10-18',
-    time: 'Sunday · 6:30 AM',
-    price: 349.00,
-    total_seats: 28,
-    booked_seats: 7,
-    difficulty: 'Moderate',
-    description: 'A breathtaking descent into the hidden canyon of Hathni Kund. Scramble over granite boulders, cross freshwater springs, and discover a secluded temple buried deep within the forest. Includes breakfast sandwiches and energy drinks.',
+    time: 'Sunday · 6:00 AM',
+    selling_price: 349.00,
+    original_price: 549.00,
+    total_seats: 30,
+    booked_seats: 0,
+    description: 'A rugged boulder and canyon trail through the Garh Ganesh valley up to Hathni Kund. Green canopy trails, natural seasonal waterfalls, stepwells, and ancient water reservoirs tucked away inside the dense northern Aravali fold.',
     included_services: [
-      'Tempo Traveller Pickup & Drop',
-      'Canyon Route Guiding',
-      'Healthy Sandwiches & Juice',
-      'Electrolyte Hydration',
-      'Professional Photography'
+      'AC Bus Pickup & Drop',
+      'Guided Canyon Trail',
+      'Fresh Samosas & Masala Chai',
+      'Hydration Stations',
+      'Certified Trek Marshals'
     ],
+    food_info: 'Warm breakfast with crispy samosas, bananas, and cardamom masala chai.',
+    water_info: 'Hydration refills at Base Camp and halfway mark.',
+    coordinators_info: '2 certified wilderness coordinators.',
     things_to_carry: [
-      'Shoes with Good Grip',
-      'Quick-dry Clothes',
-      'Waterproof Pouch for Phone'
+      'Grippy Running Shoes',
+      'Extra Pair of Socks',
+      'Rain Jacket',
+      'College ID',
+      '1L Water Bottle'
     ],
     safety_rules: [
-      'Check footing on wet rocks',
-      'No diving into unverified pool depths'
+      'Avoid mossy slippery boulders',
+      'Single file along the canyon creek',
+      'Keep all electronic gadgets waterproofed'
     ],
-    is_published: true
-  },
-  {
-    id: 'a4444444-4444-4444-4444-444444444444',
-    slug: 'chandlai-lake-sunset-ramble',
-    title: 'CHANDLAI LAKE FLAMINGO WALK & SUNSET',
-    subtitle: 'Scenic birdwatching ramble and sunset chill session on the lake dyke.',
-    poster_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
-    gallery_urls: [
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80'
-    ],
-    date: '2026-10-24',
-    time: 'Saturday · 3:30 PM',
-    price: 249.00,
-    total_seats: 35,
-    booked_seats: 4,
-    difficulty: 'Easy',
-    description: 'Perfect for beginners and photography enthusiasts. Walk the ancient mud bund of Chandlai lake as thousands of migratory flamingos and waterfowl gather. Wrap up the hike watching the sun dip behind the Aravalis with fresh samosas and chai.',
-    included_services: [
-      'Bus Pickup & Drop',
-      'Birdwatching Binoculars',
-      'Evening Snacks & Tea',
-      'Community Chill Circle'
-    ],
-    things_to_carry: [
-      'Comfortable Walking Shoes',
-      'Binoculars (optional)',
-      'Sunglasses'
-    ],
-    safety_rules: [
-      'Maintain silence near nesting colonies',
-      'Stay on marked earthen embankment'
-    ],
+    featured: false,
+    background_media_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80',
+    background_media_type: 'image',
+    primary_accent: '#34D399',
+    secondary_accent: '#059669',
+    overlay_intensity: 'dark',
     is_published: true
   }
 ];
 
+const initialWaypoints = [
+  { id: 'w1', hike_id: 'a1111111-1111-1111-1111-111111111111', title: 'Pickup Points (WTP & Mansarovar)', description: 'AC bus boarding at central Jaipur student hubs.', icon: 'bus', sort_order: 1, estimated_duration: '25 mins', is_published: true },
+  { id: 'w2', hike_id: 'a1111111-1111-1111-1111-111111111111', title: 'Base Trailhead: Charan Mandir', description: 'Briefing by coordinators, stretching & hydration.', icon: 'footprints', sort_order: 2, estimated_duration: '15 mins', is_published: true },
+  { id: 'w3', hike_id: 'a1111111-1111-1111-1111-111111111111', title: 'The Aravali Ridge Trail', description: 'Scenic ascent along stone steps & mountain spine.', icon: 'mountain', sort_order: 3, estimated_duration: '40 mins', is_published: true },
+  { id: 'w4', hike_id: 'a1111111-1111-1111-1111-111111111111', title: 'Nahargarh Summit & Sunrise', description: '360° panoramic sunrise view over the Pink City.', icon: 'sun', sort_order: 4, estimated_duration: '35 mins', is_published: true },
+  { id: 'w5', hike_id: 'a1111111-1111-1111-1111-111111111111', title: 'Hot Breakfast & Ginger Chai', description: 'Fresh poha & steaming chai at the ridge summit.', icon: 'coffee', sort_order: 5, estimated_duration: '30 mins', is_published: true },
+  { id: 'w6', hike_id: 'a1111111-1111-1111-1111-111111111111', title: 'Return Drop to Campus Hubs', description: 'Descent and comfortable AC coach drop back by 10:30 AM.', icon: 'flag', sort_order: 6, estimated_duration: '30 mins', is_published: true }
+];
+
 const initialPickups = [
-  {
-    id: 'b1111111-1111-1111-1111-111111111111',
-    hike_id: 'a1111111-1111-1111-1111-111111111111',
-    title: 'WTP / Gaurav Tower',
-    landmark: 'Opposite World Trade Park Main Gate, JLN Marg',
-    pickup_time: '04:45 AM',
-    map_url: 'https://maps.google.com/?q=WTP+Jaipur',
-    capacity: 20,
-    is_active: true
-  },
-  {
-    id: 'b2222222-2222-2222-2222-222222222222',
-    hike_id: 'a1111111-1111-1111-1111-111111111111',
-    title: 'Raja Park (LBS College Corner)',
-    landmark: 'Near Saras Dairy Booth, Tilak Nagar Link',
-    pickup_time: '05:00 AM',
-    map_url: 'https://maps.google.com/?q=Raja+Park+Jaipur',
-    capacity: 20,
-    is_active: true
-  },
-  {
-    id: 'b3333333-3333-3333-3333-333333333333',
-    hike_id: 'a1111111-1111-1111-1111-111111111111',
-    title: 'Vaishali Nagar',
-    landmark: 'Amrapali Circle Bus Stop',
-    pickup_time: '04:30 AM',
-    map_url: 'https://maps.google.com/?q=Amrapali+Circle+Jaipur',
-    capacity: 20,
-    is_active: true
-  },
-  {
-    id: 'b4444444-4444-4444-4444-444444444444',
-    hike_id: 'a1111111-1111-1111-1111-111111111111',
-    title: 'Mansarovar Metro Station',
-    landmark: 'Gate No. 1 Auto Stand',
-    pickup_time: '04:20 AM',
-    map_url: 'https://maps.google.com/?q=Mansarovar+Metro+Jaipur',
-    capacity: 20,
-    is_active: true
-  }
+  { id: 'p1111111-1111-1111-1111-111111111111', title: 'WTP / Gaurav Tower', landmark: 'Main Gate, JLN Marg, Malviya Nagar', pickup_time: '04:45 AM', is_active: true },
+  { id: 'p2222222-2222-2222-2222-222222222222', 'title': 'Mansarovar Metro Station', landmark: 'Pillar No. 24, Near Ticket Counter', pickup_time: '05:05 AM', is_active: true },
+  { id: 'p3333333-3333-3333-3333-333333333333', title: 'Rambagh Circle / SMS Stadium', landmark: 'North Gate Bus Bay, Tonk Road', pickup_time: '05:20 AM', is_active: true }
 ];
 
 const initialCoupons = [
   {
-    id: 'e1111111-1111-1111-1111-111111111111',
+    id: 'c1111111-1111-1111-1111-111111111111',
     code: 'ONLYHIKES50',
     discount_type: 'fixed',
     discount_value: 50.00,
-    min_order_amount: 299.00,
-    max_discount_amount: 50.00,
-    expiry_date: '2028-12-31T23:59:59Z',
-    max_uses: 500,
-    uses_count: 24,
-    applicable_hikes: [],
-    is_active: true
-  },
-  {
-    id: 'e2222222-2222-2222-2222-222222222222',
-    code: 'JAIPURSTUDENT',
-    discount_type: 'percentage',
-    discount_value: 15.00,
-    min_order_amount: 299.00,
-    max_discount_amount: 100.00,
-    expiry_date: '2028-12-31T23:59:59Z',
+    max_discount: 50.00,
+    min_order_amount: 200.00,
     max_uses: 1000,
-    uses_count: 58,
-    applicable_hikes: [],
-    is_active: true
-  },
-  {
-    id: 'e3333333-3333-3333-3333-333333333333',
-    code: 'SQUADUP',
-    discount_type: 'fixed',
-    discount_value: 150.00,
-    min_order_amount: 800.00,
-    max_discount_amount: 150.00,
-    expiry_date: '2028-12-31T23:59:59Z',
-    max_uses: 200,
-    uses_count: 11,
-    applicable_hikes: [],
+    current_uses: 0,
     is_active: true
   }
 ];
 
-const initialVotingRounds = [
+const initialMediaLibrary = [
   {
-    id: 'c1111111-1111-1111-1111-111111111111',
-    title: 'WEEKEND #42: WHERE SHOULD WE GO NEXT?',
-    description: 'Jaipur students decide the trail. The winning adventure will be scheduled for next weekend with exclusive student pricing.',
-    start_date: '2026-09-25T00:00:00Z',
-    end_date: '2026-10-05T23:59:59Z',
+    id: 'm1',
+    title: 'Nahargarh Dawn Poster',
+    file_url: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=1200&q=80',
+    file_type: 'poster',
+    file_size: 450000,
+    placement: 'homepage_hero',
     is_active: true,
-    options: [
-      {
-        id: 'd1111111-1111-1111-1111-111111111111',
-        title: 'Sambhar Salt Lake Camp & Stargazing',
-        subtitle: 'White desert vibes, tent setup & milky way observation',
-        image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
-        difficulty: 'Moderate',
-        votes_count: 142
-      },
-      {
-        id: 'd2222222-2222-2222-2222-222222222222',
-        title: 'Amer Sagar Secret Stepwell Trail',
-        subtitle: 'Forgotten 16th-century reservoir and forest ruins behind Amer',
-        image_url: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=800&q=80',
-        difficulty: 'Easy',
-        votes_count: 98
-      },
-      {
-        id: 'd3333333-3333-3333-3333-333333333333',
-        title: 'Garh Ganesh 365-Step Peak Scramble',
-        subtitle: 'Ancient steep rock staircase overlooking the whole walled city',
-        image_url: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=800&q=80',
-        difficulty: 'Challenging',
-        votes_count: 114
-      },
-      {
-        id: 'd4444444-4444-4444-4444-444444444444',
-        title: 'Chour Ghati Hidden Valley Trek',
-        subtitle: 'Monolith rock formations and quiet nature canyon near Galta',
-        image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-        difficulty: 'Moderate',
-        votes_count: 76
-      }
-    ]
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'm2',
+    title: 'Bhangarh Night Trek Reel Cover',
+    file_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+    file_type: 'reel',
+    file_size: 320000,
+    placement: 'trek_detail',
+    is_active: true,
+    created_at: new Date().toISOString()
   }
 ];
 
-const initialExplore = [
+const initialExploreCategories = [
+  { id: 'e1', name: 'Forts & Ridges', slug: 'forts-ridges', description: 'Ancient Aravali bastions with panoramic views.', icon: 'castle', sort_order: 1 },
+  { id: 'e2', name: 'Sunrise & Sunset Points', slug: 'sunrise-sunset', description: 'Best dawn & dusk horizons in Jaipur.', icon: 'sun', sort_order: 2 },
+  { id: 'e3', name: 'Hidden Gorges & Valleys', slug: 'hidden-valleys', description: 'Canyons, stepwells & water reservoirs.', icon: 'compass', sort_order: 3 }
+];
+
+const initialExploreItems = [
   {
-    id: 'exp-1',
-    category: 'Hiking',
-    title: 'Nahargarh Back-Ridge Trail',
-    location: 'Charan Mandir Route',
-    best_time: '5:00 AM - 7:30 AM',
-    difficulty: 'Moderate',
+    id: 'item1',
+    category_id: 'e1',
+    category: 'Forts & Ridges',
+    title: 'Nahargarh Charan Mandir Trail',
+    description: 'Secret step ascent up the Aravali spine overlooking Jaipur.',
     image_url: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=800&q=80',
-    description: 'The most popular trail among Jaipur college students. Passes through stone paths and thorn forest before climbing to the fort walls.',
-    tips: 'Start before 5:30 AM to catch the dawn glow. Carry good grip sneakers.'
+    location: 'Behind Charan Mandir',
+    best_time: '5:15 AM - 7:30 AM',
+    is_published: true
   },
   {
-    id: 'exp-2',
-    category: 'Forts',
-    title: 'Jaigarh Secret Bastions',
-    location: 'Amer Hills',
-    best_time: '6:00 AM - 10:00 AM',
-    difficulty: 'Easy',
-    image_url: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=800&q=80',
-    description: 'The fortress of victory perched high above Amer Fort with expansive views over Maota Lake and Sagar reservoir.',
-    tips: 'Look for the interconnected underground tunnel leading toward Amer.'
+    id: 'item2',
+    category_id: 'e2',
+    category: 'Sunrise & Sunset Points',
+    title: 'Galta Ji Sun Temple Ridge',
+    description: 'Watch sunrise flood the entire Pink City valley from ancient temples.',
+    image_url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80',
+    location: 'Galta Gate, East Jaipur',
+    best_time: '5:45 AM - 7:00 AM',
+    is_published: true
   },
   {
-    id: 'exp-3',
-    category: 'Sunrise',
-    title: 'Garh Ganesh Sunrise Steps',
-    location: 'Brahmapuri Ridge',
-    best_time: '5:15 AM - 6:30 AM',
-    difficulty: 'Challenging',
+    id: 'item3',
+    category_id: 'e3',
+    category: 'Hidden Gorges & Valleys',
+    title: 'Hathni Kund Hidden Canyon',
+    description: 'Secluded canyon gorge tucked behind Garh Ganesh hill.',
     image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
-    description: '365 steep stone steps built directly into the cliff face leading to an ancient fortress temple with sweeping city panoramas.',
-    tips: 'A great morning cardio blast. The temple does not allow phone photography inside.'
-  },
-  {
-    id: 'exp-4',
-    category: 'Sunset',
-    title: 'Hathni Kund Sunset Perch',
-    location: 'Nahargarh Foothills',
-    best_time: '5:30 PM - 7:00 PM',
-    difficulty: 'Moderate',
-    image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
-    description: 'Catch the twilight sky turn purple over the Jaipur basin from this secluded boulder lookout.',
-    tips: 'Bring a light jacket as winds pick up after dark.'
-  },
-  {
-    id: 'exp-5',
-    category: 'Nature',
-    title: 'Chandlai Lake Wetland',
-    location: 'Tonk Road (30km from Jaipur)',
-    best_time: '4:00 PM - 6:30 PM',
-    difficulty: 'Easy',
-    image_url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
-    description: 'Pristine 100-year-old reservoir hosting thousands of migratory flamingos and pochards in the winter season.',
-    tips: 'Carry binoculars and avoid bright synthetic clothing.'
-  },
-  {
-    id: 'exp-6',
-    category: 'Hidden Spots',
-    title: 'Chour Ghati Forest Valley',
-    location: 'Galta Gorge',
+    location: 'Near Garh Ganesh, Amber Road',
     best_time: '6:00 AM - 9:00 AM',
-    difficulty: 'Moderate',
-    image_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
-    description: 'A quiet valley between two towering Aravali spurs filled with natural stone caverns, peacocks, and desert flora.',
-    tips: 'Best visited in groups of 4 or more. Avoid feeding the rhesus monkeys.'
+    is_published: true
   }
 ];
 
-const initialReviews = [
-  {
-    id: 'rev-1',
-    hike_id: 'a1111111-1111-1111-1111-111111111111',
-    author_name: 'Aarav Sharma',
-    author_college: 'MNIT Jaipur · CSE \'25',
-    rating: 5,
-    comment: 'Honestly thought I would regret waking up at 4:30 AM, but the sunrise from the ridge was pure magic. The bus pickup from WTP made everything super smooth. Meeting students from Manipal & JECRC was awesome!',
-    is_verified: true,
-    is_featured: true,
-    created_at: '2026-09-20T10:00:00Z'
-  },
-  {
-    id: 'rev-2',
-    hike_id: 'a1111111-1111-1111-1111-111111111111',
-    author_name: 'Tanvi Mathur',
-    author_college: 'Manipal University Jaipur · Design',
-    rating: 5,
-    comment: 'The coordinators were so supportive! I was nervous about the rocky path, but they helped everyone through. The hot chai and poha at the top tasted 10x better after that climb.',
-    is_verified: true,
-    is_featured: true,
-    created_at: '2026-09-21T12:30:00Z'
-  },
-  {
-    id: 'rev-3',
-    hike_id: 'a2222222-2222-2222-2222-222222222222',
-    author_name: 'Rohan Khandelwal',
-    author_college: 'Rajasthan University · Commerce',
-    rating: 5,
-    comment: 'Bhangarh night trek was wild! Stargazing away from city lights with acoustic songs by the fire was the best weekend I have had in Jaipur so far. Highly recommend the squad discount!',
-    is_verified: true,
-    is_featured: true,
-    created_at: '2026-09-22T08:15:00Z'
-  }
-];
-
-const initialBookings = [
-  {
-    id: 'bk-demo-101',
-    booking_ref: 'OH-2026-8921',
-    hike_id: 'a1111111-1111-1111-1111-111111111111',
-    hike_title: 'NAHARGARH SUNRISE HIKE',
-    hike_date: 'Sunday, 4 October 2026',
-    user_id: 'user-sample-01',
-    student_name: 'Aarav Sharma',
-    student_email: 'aarav.sharma@mnit.ac.in',
-    student_phone: '+91 98290 12345',
-    student_college: 'MNIT Jaipur',
-    seats_count: 2,
-    pickup_title: 'WTP / Gaurav Tower',
-    pickup_time: '04:45 AM',
-    original_amount: 598.00,
-    discount_amount: 0.00,
-    total_amount: 598.00,
-    payment_status: 'paid',
-    payment_id: 'pay_demo_test_101',
-    created_at: '2026-09-24T14:20:00Z'
-  }
-];
-
-class MockDataStore {
+class MockDataService {
   constructor() {
+    this.brandSettings = { ...initialBrandSettings };
+    this.siteContent = { ...initialSiteContent };
     this.hikes = [...initialHikes];
+    this.waypoints = [...initialWaypoints];
     this.pickups = [...initialPickups];
     this.coupons = [...initialCoupons];
-    this.votingRounds = JSON.parse(JSON.stringify(initialVotingRounds));
-    this.userVotes = new Map(); // key: `${roundId}_${userId}`
-    this.explore = [...initialExplore];
-    this.reviews = [...initialReviews];
-    this.bookings = [...initialBookings];
-    this.users = [
-      {
-        id: 'user-sample-01',
-        full_name: 'Aarav Sharma',
-        email: 'aarav.sharma@mnit.ac.in',
-        phone: '+91 98290 12345',
-        college: 'MNIT Jaipur',
-        city: 'Jaipur',
-        referral_code: 'AARAV50',
-        referral_count: 3,
-        rewards_earned: 150
-      },
-      {
-        id: 'user-sample-02',
-        full_name: 'Tanvi Mathur',
-        email: 'tanvi.m@jaipur.manipal.edu',
-        phone: '+91 94140 54321',
-        college: 'Manipal University Jaipur',
-        city: 'Jaipur',
-        referral_code: 'TANVI50',
-        referral_count: 1,
-        rewards_earned: 50
-      }
-    ];
+    this.mediaLibrary = [...initialMediaLibrary];
+    this.exploreCategories = [...initialExploreCategories];
+    this.exploreItems = [...initialExploreItems];
+    this.bookings = []; // Strictly real bookings only!
+    this.reviews = []; // Real approved reviews only!
+    this.savedHikes = []; // User saved hikes
+    this.users = []; // Real registered students only
   }
 
-  getHikes() {
-    return this.hikes;
+  // --- Brand Settings ---
+  getBrandSettings() {
+    return this.brandSettings;
   }
 
-  getHikeByIdOrSlug(identifier) {
-    return this.hikes.find(h => h.id === identifier || h.slug === identifier) || null;
+  updateBrandSettings(updates) {
+    this.brandSettings = {
+      ...this.brandSettings,
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+    return this.brandSettings;
   }
 
-  addHike(hike) {
-    this.hikes.unshift(hike);
-    return hike;
+  // --- Site Content CMS ---
+  getSiteContent(sectionKey) {
+    if (sectionKey) {
+      return this.siteContent[sectionKey] || null;
+    }
+    return this.siteContent;
+  }
+
+  updateSiteContent(sectionKey, content) {
+    this.siteContent[sectionKey] = {
+      ...this.siteContent[sectionKey],
+      ...content
+    };
+    return this.siteContent[sectionKey];
+  }
+
+  // --- Media Library ---
+  getMedia(placement) {
+    if (placement) {
+      return this.mediaLibrary.filter(m => m.placement === placement && m.is_active);
+    }
+    return this.mediaLibrary;
+  }
+
+  addMedia(mediaItem) {
+    const newItem = {
+      id: `media_${Date.now()}`,
+      created_at: new Date().toISOString(),
+      is_active: true,
+      placement: 'unassigned',
+      ...mediaItem
+    };
+    this.mediaLibrary.unshift(newItem);
+    return newItem;
+  }
+
+  deleteMedia(id) {
+    const idx = this.mediaLibrary.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      const deleted = this.mediaLibrary.splice(idx, 1)[0];
+      return deleted;
+    }
+    return null;
+  }
+
+  // --- Hikes Management ---
+  getHikes({ publishedOnly = true, featuredOnly = false } = {}) {
+    return this.hikes.filter(h => {
+      if (publishedOnly && !h.is_published) return false;
+      if (featuredOnly && !h.featured) return false;
+      return true;
+    });
+  }
+
+  getHikeBySlug(slug) {
+    return this.hikes.find(h => h.slug === slug || h.id === slug) || null;
+  }
+
+  getHikeById(id) {
+    return this.hikes.find(h => h.id === id) || null;
+  }
+
+  createHike(hikeData) {
+    const newHike = {
+      id: `hike_${Date.now()}`,
+      slug: hikeData.slug || hikeData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      booked_seats: 0,
+      is_published: hikeData.is_published !== undefined ? hikeData.is_published : true,
+      created_at: new Date().toISOString(),
+      ...hikeData
+    };
+    this.hikes.push(newHike);
+    return newHike;
   }
 
   updateHike(id, updates) {
@@ -471,130 +486,283 @@ class MockDataStore {
   deleteHike(id) {
     const idx = this.hikes.findIndex(h => h.id === id);
     if (idx !== -1) {
-      return this.hikes.splice(idx, 1)[0];
+      const deleted = this.hikes.splice(idx, 1)[0];
+      this.waypoints = this.waypoints.filter(w => w.hike_id !== id);
+      return deleted;
     }
     return null;
   }
 
-  getPickups(hikeId) {
-    if (!hikeId) return this.pickups;
-    const hikeSpecific = this.pickups.filter(p => p.hike_id === hikeId);
-    if (hikeSpecific.length > 0) return hikeSpecific;
-    return this.pickups;
+  duplicateHike(id) {
+    const hike = this.getHikeById(id);
+    if (!hike) return null;
+    const duplicated = {
+      ...hike,
+      id: `hike_${Date.now()}`,
+      slug: `${hike.slug}-copy-${Date.now().toString().slice(-4)}`,
+      title: `${hike.title} (Copy)`,
+      booked_seats: 0,
+      is_published: false,
+      created_at: new Date().toISOString()
+    };
+    this.hikes.push(duplicated);
+    return duplicated;
   }
 
+  // --- Route Waypoints ---
+  getWaypoints(hikeId) {
+    return this.waypoints
+      .filter(w => w.hike_id === hikeId && w.is_published)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  }
+
+  getAllWaypoints(hikeId) {
+    return this.waypoints
+      .filter(w => w.hike_id === hikeId)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  }
+
+  createWaypoint(data) {
+    const wp = {
+      id: `wp_${Date.now()}`,
+      is_published: true,
+      sort_order: this.waypoints.filter(w => w.hike_id === data.hike_id).length + 1,
+      ...data
+    };
+    this.waypoints.push(wp);
+    return wp;
+  }
+
+  updateWaypoint(id, updates) {
+    const idx = this.waypoints.findIndex(w => w.id === id);
+    if (idx !== -1) {
+      this.waypoints[idx] = { ...this.waypoints[idx], ...updates };
+      return this.waypoints[idx];
+    }
+    return null;
+  }
+
+  deleteWaypoint(id) {
+    const idx = this.waypoints.findIndex(w => w.id === id);
+    if (idx !== -1) {
+      return this.waypoints.splice(idx, 1)[0];
+    }
+    return null;
+  }
+
+  // --- Pickups ---
+  getPickups({ activeOnly = true } = {}) {
+    return this.pickups.filter(p => !activeOnly || p.is_active);
+  }
+
+  createPickup(data) {
+    const pickup = {
+      id: `pickup_${Date.now()}`,
+      is_active: true,
+      ...data
+    };
+    this.pickups.push(pickup);
+    return pickup;
+  }
+
+  updatePickup(id, updates) {
+    const idx = this.pickups.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      this.pickups[idx] = { ...this.pickups[idx], ...updates };
+      return this.pickups[idx];
+    }
+    return null;
+  }
+
+  // Get real booking counts per pickup
+  getPickupManifest() {
+    return this.pickups.map(p => {
+      const assignedBookings = this.bookings.filter(b => b.pickup_location_id === p.id);
+      const totalStudents = assignedBookings.reduce((sum, b) => sum + (b.seats_count || 1), 0);
+      return {
+        ...p,
+        total_students: totalStudents,
+        bookings_count: assignedBookings.length,
+        bookings: assignedBookings
+      };
+    });
+  }
+
+  // --- Coupons ---
   getCoupons() {
     return this.coupons;
   }
 
   getCouponByCode(code) {
     if (!code) return null;
-    return this.coupons.find(c => c.code.toUpperCase() === code.trim().toUpperCase() && c.is_active);
+    return this.coupons.find(c => c.code.toUpperCase() === code.toUpperCase() && c.is_active) || null;
   }
 
-  getActiveVotingRound() {
-    return this.votingRounds.find(r => r.is_active) || this.votingRounds[0];
-  }
-
-  getAllVotingRounds() {
-    return this.votingRounds;
-  }
-
-  castVote(roundId, optionId, userId) {
-    const voteKey = `${roundId}_${userId}`;
-    if (this.userVotes.has(voteKey)) {
-      throw new Error('You have already voted in this round. Each student is allowed 1 vote.');
-    }
-
-    const round = this.votingRounds.find(r => r.id === roundId);
-    if (!round) throw new Error('Voting round not found.');
-    if (!round.is_active) throw new Error('This voting round has ended.');
-
-    const option = round.options.find(o => o.id === optionId);
-    if (!option) throw new Error('Selected destination option does not exist.');
-
-    option.votes_count += 1;
-    this.userVotes.set(voteKey, { optionId, votedAt: new Date().toISOString() });
-
-    return { success: true, optionId, newVotesCount: option.votes_count };
-  }
-
-  hasUserVoted(roundId, userId) {
-    return this.userVotes.has(`${roundId}_${userId}`);
-  }
-
-  getUserVotedOption(roundId, userId) {
-    const record = this.userVotes.get(`${roundId}_${userId}`);
-    return record ? record.optionId : null;
-  }
-
-  createBooking(bookingData) {
-    const hike = this.getHikeByIdOrSlug(bookingData.hike_id);
-    if (!hike) throw new Error('Hike not found');
-
-    const availableSeats = hike.total_seats - hike.booked_seats;
-    if (bookingData.seats_count > availableSeats) {
-      throw new Error(`Only ${availableSeats} seats remaining for this hike. Cannot book ${bookingData.seats_count} seats.`);
-    }
-
-    // Allocate seats
-    hike.booked_seats += bookingData.seats_count;
-
-    const newBooking = {
-      id: `bk-${Date.now()}`,
-      booking_ref: `OH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      ...bookingData,
-      hike_title: hike.title,
-      hike_date: hike.time,
-      created_at: new Date().toISOString()
+  createCoupon(data) {
+    const coupon = {
+      id: `coupon_${Date.now()}`,
+      code: data.code.toUpperCase(),
+      current_uses: 0,
+      is_active: true,
+      ...data
     };
-
-    this.bookings.unshift(newBooking);
-    return newBooking;
+    this.coupons.push(coupon);
+    return coupon;
   }
 
-  getBookings(filter = {}) {
-    let result = [...this.bookings];
-    if (filter.hike_id) result = result.filter(b => b.hike_id === filter.hike_id);
-    if (filter.payment_status) result = result.filter(b => b.payment_status === filter.payment_status);
-    if (filter.search) {
-      const q = filter.search.toLowerCase();
-      result = result.filter(b => 
-        b.student_name.toLowerCase().includes(q) || 
-        b.student_email.toLowerCase().includes(q) || 
-        b.booking_ref.toLowerCase().includes(q)
-      );
+  updateCoupon(id, updates) {
+    const idx = this.coupons.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      this.coupons[idx] = { ...this.coupons[idx], ...updates };
+      return this.coupons[idx];
     }
-    return result;
+    return null;
+  }
+
+  // --- Bookings ---
+  getBookings({ hikeId, paymentStatus, search } = {}) {
+    return this.bookings.filter(b => {
+      if (hikeId && b.hike_id !== hikeId) return false;
+      if (paymentStatus && b.payment_status !== paymentStatus) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        const matches = (
+          b.student_name?.toLowerCase().includes(q) ||
+          b.student_email?.toLowerCase().includes(q) ||
+          b.student_phone?.includes(q) ||
+          b.booking_ref?.toLowerCase().includes(q)
+        );
+        if (!matches) return false;
+      }
+      return true;
+    });
   }
 
   getBookingById(id) {
     return this.bookings.find(b => b.id === id || b.booking_ref === id) || null;
   }
 
-  updateBookingStatus(id, status, paymentId = null) {
-    const b = this.bookings.find(x => x.id === id || x.booking_ref === id);
+  createBooking(bookingPayload) {
+    const hike = this.getHikeById(bookingPayload.hike_id);
+    if (!hike) {
+      throw new Error('Trek not found.');
+    }
+
+    const availableSeats = hike.total_seats - (hike.booked_seats || 0);
+    if (bookingPayload.seats_count > availableSeats) {
+      throw new Error(`Only ${availableSeats} seat(s) remaining for this trek.`);
+    }
+
+    const bookingRef = `OH-${Date.now().toString(36).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+
+    const newBooking = {
+      id: `bk_${Date.now()}`,
+      booking_ref: bookingRef,
+      created_at: new Date().toISOString(),
+      payment_status: 'pending',
+      hike_title: hike.title,
+      hike_date: hike.date,
+      hike_time: hike.time,
+      hike_poster: hike.poster_url,
+      ...bookingPayload
+    };
+
+    // Increment booked seats on the hike
+    hike.booked_seats = (hike.booked_seats || 0) + bookingPayload.seats_count;
+
+    this.bookings.unshift(newBooking);
+    return newBooking;
+  }
+
+  updateBookingPayment(id, { payment_status, payment_id }) {
+    const b = this.getBookingById(id);
     if (b) {
-      b.payment_status = status;
-      if (paymentId) b.payment_id = paymentId;
+      b.payment_status = payment_status;
+      if (payment_id) b.payment_id = payment_id;
+      b.updated_at = new Date().toISOString();
       return b;
     }
     return null;
   }
 
-  getExploreItems() {
-    return this.explore;
+  // --- Real Reviews Moderation ---
+  getReviews({ approvedOnly = true } = {}) {
+    return this.reviews.filter(r => !approvedOnly || r.is_approved);
   }
 
-  getReviews() {
-    return this.reviews;
+  addReview(reviewData) {
+    const rev = {
+      id: `rev_${Date.now()}`,
+      created_at: new Date().toISOString(),
+      is_approved: false, // requires admin approval
+      ...reviewData
+    };
+    this.reviews.unshift(rev);
+    return rev;
   }
 
-  getUsers() {
-    return this.users;
+  moderateReview(id, is_approved) {
+    const rev = this.reviews.find(r => r.id === id);
+    if (rev) {
+      rev.is_approved = is_approved;
+      return rev;
+    }
+    return null;
+  }
+
+  // --- Saved Hikes ---
+  getSavedHikes(userId) {
+    const hikeIds = this.savedHikes.filter(s => s.user_id === userId).map(s => s.hike_id);
+    return this.hikes.filter(h => hikeIds.includes(h.id));
+  }
+
+  toggleSavedHike(userId, hikeId) {
+    const idx = this.savedHikes.findIndex(s => s.user_id === userId && s.hike_id === hikeId);
+    if (idx !== -1) {
+      this.savedHikes.splice(idx, 1);
+      return { saved: false };
+    } else {
+      this.savedHikes.push({ id: `save_${Date.now()}`, user_id: userId, hike_id: hikeId, created_at: new Date().toISOString() });
+      return { saved: true };
+    }
+  }
+
+  // --- Real Admin Overview Metrics (Zero Fake Stats) ---
+  getAdminOverview() {
+    const upcomingHikes = this.hikes.filter(h => h.is_published && new Date(h.date) >= new Date()).length;
+    const totalBookings = this.bookings.length;
+    const paidBookings = this.bookings.filter(b => b.payment_status === 'paid');
+    const totalRevenue = paidBookings.reduce((sum, b) => sum + (Number(b.total_amount) || 0), 0);
+    const activeCoupons = this.coupons.filter(c => c.is_active).length;
+    const totalUsers = this.users.length;
+
+    return {
+      upcoming_hikes: upcomingHikes,
+      total_bookings: totalBookings,
+      paid_bookings_count: paidBookings.length,
+      total_revenue: totalRevenue,
+      active_coupons: activeCoupons,
+      total_users: totalUsers,
+      recent_bookings: this.bookings.slice(0, 5)
+    };
+  }
+
+  // --- Explore ---
+  getExploreCategories() {
+    return this.exploreCategories;
+  }
+
+  getExploreItems(categoryId) {
+    if (categoryId) {
+      return this.exploreItems.filter(i => (i.category_id === categoryId || i.category === categoryId) && i.is_published);
+    }
+    return this.exploreItems.filter(i => i.is_published);
   }
 }
 
-const mockStore = new MockDataStore();
+const mockDataService = new MockDataService();
 
-module.exports = mockStore;
+module.exports = {
+  mockDataService,
+  MockDataService
+};

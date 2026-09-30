@@ -1,20 +1,18 @@
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Bus, Utensils, ArrowUpRight, ShieldCheck } from 'lucide-react';
-import Badge from '../ui/Badge';
+import { Calendar, Clock, Bus, Utensils, ArrowUpRight, ShieldCheck, Sparkles } from 'lucide-react';
 import SeatProgressBar from '../ui/SeatProgressBar';
 
 export default function TrekCard({ hike }) {
   if (!hike) return null;
 
-  const difficultyVariant = {
-    Easy: 'success',
-    Moderate: 'acid',
-    Challenging: 'flame',
-    Strenuous: 'flameSolid',
-  }[hike.difficulty] || 'acid';
+  const sellingPrice = hike.selling_price || hike.price || 299;
+  const originalPrice = hike.original_price || (sellingPrice + 200);
+  const themeAccent = hike.theme_accent || '#CCFF00';
+  const bookedSeats = hike.booked_seats || 0;
+  const totalSlots = hike.slots_total || hike.total_seats || 25;
+  const tagText = hike.tag || 'Sunday Expedition';
 
   const href = `/hikes/${hike.slug || hike.id}`;
 
@@ -22,7 +20,7 @@ export default function TrekCard({ hike }) {
     <motion.div
       whileHover={{ y: -6 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="group relative flex flex-col bg-charcoal-900 border border-white/10 hover:border-acid/50 rounded-3xl overflow-hidden shadow-xl hover:shadow-acid-glow/20 transition-colors"
+      className="group relative flex flex-col bg-charcoal-900 border border-white/10 hover:border-white/30 rounded-3xl overflow-hidden shadow-xl transition-all duration-300"
     >
       {/* Poster Image Container */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-charcoal-800">
@@ -38,21 +36,37 @@ export default function TrekCard({ hike }) {
 
         {/* Top Badges */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-          <Badge variant={difficultyVariant} size="sm">
-            {hike.difficulty}
-          </Badge>
-          <div className="bg-charcoal-950/80 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10 text-offwhite font-black text-sm">
-            ₹{hike.price} <span className="text-[10px] text-muted font-normal">/ person</span>
+          <div
+            className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider backdrop-blur-md border flex items-center gap-1.5"
+            style={{
+              backgroundColor: 'rgba(7, 7, 9, 0.8)',
+              borderColor: themeAccent,
+              color: themeAccent
+            }}
+          >
+            <Sparkles className="w-3 h-3" />
+            <span>{tagText}</span>
+          </div>
+
+          <div className="bg-charcoal-950/90 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10 text-offwhite flex items-baseline gap-1.5">
+            <span className="font-display font-black text-sm text-acid">
+              ₹{sellingPrice}
+            </span>
+            {originalPrice > sellingPrice && (
+              <span className="text-muted line-through text-[11px] font-normal">
+                ₹{originalPrice}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Quick Inclusions Badges on Poster */}
         <div className="absolute bottom-3 left-4 flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1 bg-charcoal-950/90 backdrop-blur-sm text-[11px] font-bold text-acid px-2.5 py-1 rounded-lg border border-acid/20">
-            <Bus className="w-3 h-3" /> Pickup + Drop
+          <span className="inline-flex items-center gap-1 bg-charcoal-950/90 backdrop-blur-sm text-[10px] font-bold text-acid px-2.5 py-1 rounded-lg border border-acid/20">
+            <Bus className="w-3 h-3" /> AC Transit
           </span>
-          <span className="inline-flex items-center gap-1 bg-charcoal-950/90 backdrop-blur-sm text-[11px] font-bold text-amber-300 px-2.5 py-1 rounded-lg border border-amber-400/20">
-            <Utensils className="w-3 h-3" /> Food Included
+          <span className="inline-flex items-center gap-1 bg-charcoal-950/90 backdrop-blur-sm text-[10px] font-bold text-offwhite px-2.5 py-1 rounded-lg border border-white/10">
+            <ShieldCheck className="w-3 h-3 text-emerald-400" /> Marshals
           </span>
         </div>
       </div>
@@ -76,7 +90,7 @@ export default function TrekCard({ hike }) {
           {hike.title}
         </h3>
 
-        {/* Subtitle */}
+        {/* Subtitle / Description */}
         <p className="text-muted text-xs line-clamp-2 leading-relaxed mb-5">
           {hike.subtitle || hike.description}
         </p>
@@ -84,15 +98,17 @@ export default function TrekCard({ hike }) {
         {/* Seat Inventory Progress Bar */}
         <div className="mt-auto mb-5">
           <SeatProgressBar
-            booked={hike.booked_seats || 0}
-            total={hike.total_seats || 25}
+            booked={bookedSeats}
+            total={totalSlots}
           />
         </div>
 
         {/* Action Button */}
         <Link href={href} className="w-full">
-          <button className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-charcoal-800 group-hover:bg-acid text-offwhite group-hover:text-charcoal-950 font-black text-xs uppercase tracking-wider transition-all duration-200">
-            <span>VIEW TREK</span>
+          <button
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-charcoal-800 hover:bg-acid text-offwhite hover:text-charcoal-950 font-black text-xs uppercase tracking-wider transition-all duration-200"
+          >
+            <span>EXPLORE EXPEDITION</span>
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
         </Link>

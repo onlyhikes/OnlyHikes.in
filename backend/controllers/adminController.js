@@ -1,64 +1,69 @@
 // ====================================================================
 // ONLYHIKES.IN — ADMIN DASHBOARD CONTROLLER
-// Aggregates overview KPIs, bus manifests, and CSV export
+// Real Database Metrics Only (Zero Fake Data, No CSV Export)
 // ====================================================================
 
-const mockStore = require('../services/mockDataService');
+const { mockDataService } = require('../services/mockDataService');
 const { supabaseAdmin, isConfigured } = require('../services/supabaseService');
 
 /**
- * Get overview KPIs for admin dashboard
+ * Get real overview KPIs for admin dashboard
  */
 async function getOverview(req, res, next) {
   try {
-    let hikesCount = 0;
-    let bookingsCount = 0;
-    let usersCount = 0;
-    let totalRevenue = 0;
-    let activeCouponsCount = 0;
-    let votingParticipation = 0;
-
     if (isConfigured && supabaseAdmin) {
-      const { count: hCount } = await supabaseAdmin.from('hikes').select('*', { count: 'exact', head: true });
-      const { data: bData } = await supabaseAdmin.from('bookings').select('total_amount, payment_status');
-      const { count: uCount } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true });
-      const { count: cCount } = await supabaseAdmin.from('coupons').select('*', { count: 'exact', head: true }).eq('is_active', true);
-      const { count: vCount } = await supabaseAdmin.from('votes').select('*', { count: 'exact', head: true });
+      // 1. Upcoming Hikes (Published and date >= today)
+      const today = new Date().toISOString().split('T')[0];
+      const { count: upcomingCount } = await supabaseAdmin
+        .from('hikes')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_published', true)
+        .gte('date', today);
 
-      hikesCount = hCount || 0;
-      usersCount = uCount || 0;
-      activeCouponsCount = cCount || 0;
-      votingParticipation = vCount || 0;
+      // 2. Real Bookings & Revenue
+      const { data: bData } = await supabaseAdmin
+        .from('bookings')
+        .select('id, booking_ref, student_name, student_email, seats_count, total_amount, payment_status, created_at')
+        .order('created_at', { ascending: false });
 
-      if (bData) {
-        bookingsCount = bData.length;
-        totalRevenue = bData
-          .filter(b => b.payment_status === 'paid')
-          .reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
-      }
-    } else {
-      hikesCount = mockStore.getHikes().length;
-      bookingsCount = mockStore.bookings.length;
-      usersCount = mockStore.getUsers().length;
-      activeCouponsCount = mockStore.getCoupons().filter(c => c.is_active).length;
-      
-      const round = mockStore.getActiveVotingRound();
-      votingParticipation = round?.options.reduce((sum, o) => sum + o.votes_count, 0) || 0;
+      // 3. Real Users
+      const { count: usersCount } = await supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
 
-      totalRevenue = mockStore.bookings
-        .filter(b => b.payment_status === 'paid')
-        .reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+      // 4. Active Coupons
+      const { count: couponsCount } = await supabaseAdmin
+        .from('coupons')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      const bookings = bData || [];
+      const paidBookings = bookings.filter(b => b.payment_status === 'paid');
+      const pendingBookings = bookings.filter(b => b.payment_status === 'pending');
+      const totalRevenue = paidBookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+
+      return res.json({
+        success: true,
+        data: {
+          upcoming_hikes: upcomingCount || 0,
+          total_bookings: bookings.length,
+          paid_bookings_count: paidBookings.length,
+          pending_bookings_count: pendingBookings.length,
+          total_revenue: totalRevenue,
+          total_users: usersCount || 0,
+          active_coupons: couponsCount || 0,
+          recent_bookings: bookings.slice(0, 5),
+          currency: 'INR'
+        }
+      });
     }
 
+    // High-fidelity local fallback (also strictly real data, zero fake metrics)
+    const metrics = mockDataService.getAdminOverview();
     return res.json({
       success: true,
       data: {
-        upcoming_hikes: hikesCount,
-        total_bookings: bookingsCount,
-        total_users: usersCount,
-        total_revenue: totalRevenue,
-        active_coupons: activeCouponsCount,
-        voting_participation: votingParticipation,
+        ...metrics,
         currency: 'INR'
       }
     });
@@ -68,53 +73,23 @@ async function getOverview(req, res, next) {
 }
 
 /**
- * Export Bookings as CSV for bus conductors & coordinators
+ * Admin: Search and list users
  */
-async function exportBookingsCsv(req, res, next) {
+async function getAllUsers(req, res, next) {
   try {
-    let bookings = [];
+    const { search } = req.query;
 
     if (isConfigured && supabaseAdmin) {
-      const { data } = await supabaseAdmin
-        .from('bookings')
-        .select('booking_ref, student_name, student_email, student_phone, student_college, seats_count, pickup_title, total_amount, payment_status, created_at')
-        .order('created_at', { ascending: false });
-      bookings = data || [];
-    } else {
-      bookings = mockStore.bookings;
+      let query = supabaseAdmin.from('profiles').select('*, bookings(id, booking_ref, total_amount, payment_status, created_at)');
+      if (search) {
+        query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,college.ilike.%${search}%`);
+      }
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) throw error;
+      return res.json({ success: true, data: data || [] });
     }
 
-    const headers = [
-      'Booking Ref',
-      'Student Name',
-      'Email',
-      'Phone',
-      'College',
-      'Seats',
-      'Pickup Location',
-      'Amount (INR)',
-      'Payment Status',
-      'Booked Date'
-    ];
-
-    const rows = bookings.map(b => [
-      `"${b.booking_ref || ''}"`,
-      `"${b.student_name || ''}"`,
-      `"${b.student_email || ''}"`,
-      `"${b.student_phone || ''}"`,
-      `"${b.student_college || ''}"`,
-      b.seats_count || 1,
-      `"${b.pickup_title || b.pickup_location_id || 'WTP'}"`,
-      b.total_amount || 0,
-      `"${b.payment_status || 'pending'}"`,
-      `"${b.created_at || ''}"`
-    ]);
-
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="OnlyHikes_Manifest.csv"');
-    return res.status(200).send(csvContent);
+    return res.json({ success: true, data: mockDataService.users });
   } catch (err) {
     next(err);
   }
@@ -122,5 +97,5 @@ async function exportBookingsCsv(req, res, next) {
 
 module.exports = {
   getOverview,
-  exportBookingsCsv
+  getAllUsers
 };

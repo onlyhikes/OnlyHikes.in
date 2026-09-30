@@ -291,17 +291,17 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        {/* Campus Ambassador CTA */}
-        <div className="bg-gradient-to-r from-charcoal-900 via-charcoal-850 to-charcoal-900 border border-acid/20 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-1/4 w-80 h-80 bg-acid/10 rounded-full blur-3xl pointer-events-none" />
-          <Badge variant="acid" size="xs" className="mb-3">
-            LEADERSHIP OPPORTUNITY
+        {/* Join the Community Crew CTA */}
+        <div className="bg-gradient-to-r from-charcoal-900 via-charcoal-850 to-charcoal-900 border border-emerald-500/30 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
+          <div className="absolute top-0 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <Badge variant="success" size="xs" className="mb-3">
+            DIRECT COMMUNITY LINE
           </Badge>
           <h3 className="font-display font-black text-2xl sm:text-4xl text-offwhite">
-            WANT TO BECOME A CAMPUS REPRESENTATIVE?
+            WANT TO HIKE WITH THE CREW THIS SUNDAY?
           </h3>
           <p className="text-muted text-xs sm:text-sm max-w-xl mx-auto mt-3 mb-6">
-            Lead student batches from your college, get free trek passes, official trek coordinator training, and cash referral bonuses.
+            Get instant trail updates, meetup coordination, sunrise photo drops, and priority seat alerts in our student WhatsApp group.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
@@ -310,7 +310,7 @@ export default function CommunityPage() {
               rel="noreferrer"
             >
               <Button variant="acid" size="md" className="uppercase font-black">
-                Apply via WhatsApp →
+                Join Student WhatsApp Channel →
               </Button>
             </a>
             <Link href="/hikes">

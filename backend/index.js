@@ -17,6 +17,11 @@ const pickupRoutes = require('./routes/pickupRoutes');
 const userRoutes = require('./routes/userRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const brandRoutes = require('./routes/brandRoutes');
+const contentRoutes = require('./routes/contentRoutes');
+const mediaRoutes = require('./routes/mediaRoutes');
+const routeRoutes = require('./routes/routeRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +57,11 @@ app.use('/api/pickups', pickupRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/brand', brandRoutes);
+app.use('/api/content', contentRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api/routes', routeRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Catch-all 404
 app.use((req, res) => {

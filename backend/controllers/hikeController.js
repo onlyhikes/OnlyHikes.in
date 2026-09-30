@@ -1,25 +1,27 @@
 // ====================================================================
 // ONLYHIKES.IN — HIKE CONTROLLER
+// Database-driven, Dynamic Pricing (Original & Selling), Dynamic Themes, No Difficulty
 // ====================================================================
 
-const mockStore = require('../services/mockDataService');
-const { supabaseAdmin, isConfigured } = require('../services/supabaseService');
+const { mockDataService } = require('../services/mockDataService');
+const { supabase, supabaseAdmin, isConfigured } = require('../services/supabaseService');
 
 /**
- * Get all published hikes (or all hikes if requested by admin)
+ * Get all hikes (published by default, all if admin)
  */
 async function getAllHikes(req, res, next) {
   try {
-    const { difficulty, search } = req.query;
+    const { search, featured } = req.query;
+    const isAdmin = Boolean(req.user?.is_admin || req.headers['x-admin-key']);
 
-    if (isConfigured && supabaseAdmin) {
-      let query = supabaseAdmin.from('hikes').select('*, pickup_locations(*)');
+    if (isConfigured && supabase) {
+      let query = supabase.from('hikes').select('*, hike_media(*), route_waypoints(*)');
       
-      if (!req.user || !req.user.is_admin) {
+      if (!isAdmin) {
         query = query.eq('is_published', true);
       }
-      if (difficulty) {
-        query = query.eq('difficulty', difficulty);
+      if (featured === 'true') {
+        query = query.eq('featured', true);
       }
       if (search) {
         query = query.ilike('title', `%${search}%`);
@@ -27,20 +29,14 @@ async function getAllHikes(req, res, next) {
 
       const { data, error } = await query.order('date', { ascending: true });
       if (error) throw error;
-      return res.json({ success: true, data });
+      return res.json({ success: true, data: data || [] });
     }
 
     // High-fidelity fallback
-    let hikes = mockStore.getHikes();
-    if (!req.user || !req.user.is_admin) {
-      hikes = hikes.filter(h => h.is_published);
-    }
-    if (difficulty) {
-      hikes = hikes.filter(h => h.difficulty.toLowerCase() === difficulty.toLowerCase());
-    }
+    let hikes = mockDataService.getHikes({ publishedOnly: !isAdmin, featuredOnly: featured === 'true' });
     if (search) {
       const q = search.toLowerCase();
-      hikes = hikes.filter(h => h.title.toLowerCase().includes(q) || h.subtitle.toLowerCase().includes(q));
+      hikes = hikes.filter(h => h.title.toLowerCase().includes(q) || h.subtitle?.toLowerCase().includes(q));
     }
 
     return res.json({ success: true, data: hikes });
@@ -56,143 +52,124 @@ async function getHikeById(req, res, next) {
   try {
     const { id } = req.params;
 
-    if (isConfigured && supabaseAdmin) {
+    if (isConfigured && supabase) {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      let query = supabaseAdmin
+      let query = supabase
         .from('hikes')
-        .select('*, hike_images(*), pickup_locations(*)');
+        .select('*, hike_media(*), route_waypoints(*)');
 
       query = isUUID ? query.eq('id', id) : query.eq('slug', id);
-      const { data, error } = await query.single();
+      const { data, error } = await query.maybeSingle();
 
       if (error || !data) {
-        return res.status(404).json({ success: false, message: 'Hike trail not found.' });
+        return res.status(404).json({ success: false, message: 'Hike not found.' });
       }
 
       return res.json({ success: true, data });
     }
 
-    // Fallback store
-    const hike = mockStore.getHikeByIdOrSlug(id);
+    const hike = mockDataService.getHikeBySlug(id) || mockDataService.getHikeById(id);
     if (!hike) {
-      return res.status(404).json({ success: false, message: 'Hike trail not found.' });
+      return res.status(404).json({ success: false, message: 'Hike not found.' });
     }
 
-    const pickups = mockStore.getPickups(hike.id);
-    return res.json({ success: true, data: { ...hike, pickup_locations: pickups } });
+    const waypoints = mockDataService.getWaypoints(hike.id);
+    return res.json({ success: true, data: { ...hike, route_waypoints: waypoints } });
   } catch (err) {
     next(err);
   }
 }
 
 /**
- * Admin: Create a new hike
+ * Create a new hike
+ * Admin protected
  */
 async function createHike(req, res, next) {
   try {
-    const {
-      title,
-      slug,
-      subtitle,
-      poster_url,
-      date,
-      time,
-      price,
-      total_seats,
-      difficulty,
-      description,
-      included_services,
-      things_to_carry,
-      safety_rules,
-      is_published
-    } = req.body;
+    const hikeData = req.body;
 
-    if (!title || !price || !total_seats || !poster_url) {
+    if (!hikeData.title || !hikeData.date || !hikeData.time || !hikeData.selling_price || !hikeData.total_seats) {
       return res.status(400).json({
         success: false,
-        message: 'Title, price, total_seats, and poster_url are required.'
+        message: 'Title, date, time, selling_price, and total_seats are required.'
       });
     }
 
-    const hikeSlug = slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = hikeData.slug || hikeData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-    const newHike = {
-      id: `hike-${Date.now()}`,
-      slug: hikeSlug,
-      title,
-      subtitle: subtitle || '',
-      poster_url,
-      date: date || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-      time: time || 'Sunday · 5:30 AM',
-      price: Number(price),
-      total_seats: Number(total_seats),
+    const payload = {
+      title: hikeData.title,
+      slug,
+      subtitle: hikeData.subtitle || '',
+      poster_url: hikeData.poster_url || 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=1200&q=80',
+      date: hikeData.date,
+      time: hikeData.time,
+      selling_price: Number(hikeData.selling_price),
+      original_price: hikeData.original_price ? Number(hikeData.original_price) : null,
+      total_seats: Number(hikeData.total_seats),
       booked_seats: 0,
-      difficulty: difficulty || 'Moderate',
-      description: description || '',
-      included_services: included_services || [
-        'Pickup & Drop',
-        'Guided Hike',
-        'Food',
-        'Water',
-        'Trek Coordinators'
-      ],
-      things_to_carry: things_to_carry || [
-        'Comfortable Shoes',
-        'Water Bottle',
-        'Campus ID'
-      ],
-      safety_rules: safety_rules || [
-        'Stay with coordinator',
-        'Stay on trail'
-      ],
-      is_published: is_published !== false
+      description: hikeData.description || '',
+      included_services: hikeData.included_services || ['AC Bus Pickup & Drop', 'Guided Ridge Trail', 'Breakfast & Chai', 'Mineral Water', 'Coordinators'],
+      food_info: hikeData.food_info || 'Fresh breakfast and hot ginger chai included.',
+      water_info: hikeData.water_info || 'Unlimited mineral water refills provided.',
+      coordinators_info: hikeData.coordinators_info || '2 Certified Trek Coordinators on every batch.',
+      things_to_carry: hikeData.things_to_carry || ['Running shoes', 'College ID', 'Water bottle', 'Daypack'],
+      safety_rules: hikeData.safety_rules || ['Stay on marked trail', 'Zero alcohol/substance tolerance'],
+      featured: Boolean(hikeData.featured),
+      background_media_url: hikeData.background_media_url || null,
+      background_media_type: hikeData.background_media_type || 'image',
+      primary_accent: hikeData.primary_accent || '#CCFF00',
+      secondary_accent: hikeData.secondary_accent || '#FF5500',
+      overlay_intensity: hikeData.overlay_intensity || 'dark',
+      meta_title: hikeData.meta_title || hikeData.title,
+      meta_description: hikeData.meta_description || hikeData.subtitle,
+      is_published: hikeData.is_published !== undefined ? Boolean(hikeData.is_published) : true
     };
 
     if (isConfigured && supabaseAdmin) {
-      const { data, error } = await supabaseAdmin.from('hikes').insert(newHike).select().single();
+      const { data, error } = await supabaseAdmin.from('hikes').insert([payload]).select().single();
       if (error) throw error;
-      return res.status(201).json({ success: true, data });
+      mockDataService.createHike(data);
+      return res.status(201).json({ success: true, data, message: 'Hike created successfully.' });
     }
 
-    mockStore.addHike(newHike);
-    return res.status(201).json({ success: true, data: newHike });
+    const created = mockDataService.createHike(payload);
+    return res.status(201).json({ success: true, data: created, message: 'Hike created successfully.' });
   } catch (err) {
     next(err);
   }
 }
 
 /**
- * Admin: Update hike (e.g. dynamic poster replacement, seats, etc.)
+ * Update an existing hike
+ * Admin protected
  */
 async function updateHike(req, res, next) {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body, updated_at: new Date().toISOString() };
+
+    if (updates.selling_price) updates.selling_price = Number(updates.selling_price);
+    if (updates.original_price) updates.original_price = Number(updates.original_price);
+    if (updates.total_seats) updates.total_seats = Number(updates.total_seats);
 
     if (isConfigured && supabaseAdmin) {
-      const { data, error } = await supabaseAdmin
-        .from('hikes')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await supabaseAdmin.from('hikes').update(updates).eq('id', id).select().single();
       if (error) throw error;
-      return res.json({ success: true, data });
+      mockDataService.updateHike(id, updates);
+      return res.json({ success: true, data, message: 'Hike updated successfully.' });
     }
 
-    const updated = mockStore.updateHike(id, updates);
-    if (!updated) {
-      return res.status(404).json({ success: false, message: 'Hike not found.' });
-    }
-
-    return res.json({ success: true, data: updated });
+    const updated = mockDataService.updateHike(id, updates);
+    return res.json({ success: true, data: updated, message: 'Hike updated successfully.' });
   } catch (err) {
     next(err);
   }
 }
 
 /**
- * Admin: Delete hike
+ * Delete a hike
+ * Admin protected
  */
 async function deleteHike(req, res, next) {
   try {
@@ -201,15 +178,48 @@ async function deleteHike(req, res, next) {
     if (isConfigured && supabaseAdmin) {
       const { error } = await supabaseAdmin.from('hikes').delete().eq('id', id);
       if (error) throw error;
+      mockDataService.deleteHike(id);
       return res.json({ success: true, message: 'Hike deleted successfully.' });
     }
 
-    const deleted = mockStore.deleteHike(id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, message: 'Hike not found.' });
+    mockDataService.deleteHike(id);
+    return res.json({ success: true, message: 'Hike deleted successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Duplicate a hike
+ * Admin protected
+ */
+async function duplicateHike(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    if (isConfigured && supabaseAdmin) {
+      const { data: original, error: fetchErr } = await supabaseAdmin.from('hikes').select('*').eq('id', id).single();
+      if (fetchErr || !original) {
+        return res.status(404).json({ success: false, message: 'Original hike not found.' });
+      }
+
+      const { id: _, created_at: __, updated_at: ___, ...rest } = original;
+      const copyPayload = {
+        ...rest,
+        title: `${original.title} (Copy)`,
+        slug: `${original.slug}-copy-${Date.now().toString().slice(-4)}`,
+        booked_seats: 0,
+        is_published: false
+      };
+
+      const { data: duplicated, error: insertErr } = await supabaseAdmin.from('hikes').insert([copyPayload]).select().single();
+      if (insertErr) throw insertErr;
+
+      return res.status(201).json({ success: true, data: duplicated, message: 'Hike duplicated.' });
     }
 
-    return res.json({ success: true, message: 'Hike deleted successfully.' });
+    const duplicated = mockDataService.duplicateHike(id);
+    return res.status(201).json({ success: true, data: duplicated, message: 'Hike duplicated.' });
   } catch (err) {
     next(err);
   }
@@ -220,5 +230,6 @@ module.exports = {
   getHikeById,
   createHike,
   updateHike,
-  deleteHike
+  deleteHike,
+  duplicateHike
 };

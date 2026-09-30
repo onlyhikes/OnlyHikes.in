@@ -1,11 +1,11 @@
 // ====================================================================
 // ONLYHIKES.IN — COUPON CONTROLLER
-// Strict server-side discount evaluation
+// Strict server-side discount evaluation & Admin Management
 // ====================================================================
 
-const mockStore = require('../services/mockDataService');
+const { mockDataService } = require('../services/mockDataService');
 const { validateAndCalculateCoupon } = require('../utils/couponValidator');
-const { supabaseAdmin, isConfigured } = require('../services/supabaseService');
+const { supabase, supabaseAdmin, isConfigured } = require('../services/supabaseService');
 
 /**
  * Validate coupon code and calculate exact discount
@@ -21,22 +21,24 @@ async function validateCoupon(req, res, next) {
     const orderAmount = Number(originalAmount) || 0;
     let coupon = null;
 
-    if (isConfigured && supabaseAdmin) {
-      const { data, error } = await supabaseAdmin
+    if (isConfigured && supabase) {
+      const { data, error } = await supabase
         .from('coupons')
         .select('*')
         .ilike('code', code.trim())
-        .single();
+        .eq('is_active', true)
+        .maybeSingle();
+
       if (!error && data) coupon = data;
     } else {
-      coupon = mockStore.getCouponByCode(code);
+      coupon = mockDataService.getCouponByCode(code);
     }
 
     if (!coupon) {
       return res.status(404).json({
         success: false,
         valid: false,
-        message: 'Invalid coupon code. Try ONLYHIKES50 for ₹50 off.'
+        message: 'Invalid or inactive promo code.'
       });
     }
 
@@ -67,10 +69,10 @@ async function getAllCoupons(req, res, next) {
     if (isConfigured && supabaseAdmin) {
       const { data, error } = await supabaseAdmin.from('coupons').select('*').order('created_at', { ascending: false });
       if (error) throw error;
-      return res.json({ success: true, data });
+      return res.json({ success: true, data: data || [] });
     }
 
-    return res.json({ success: true, data: mockStore.getCoupons() });
+    return res.json({ success: true, data: mockDataService.getCoupons() });
   } catch (err) {
     next(err);
   }
@@ -86,10 +88,10 @@ async function createCoupon(req, res, next) {
       discount_type,
       discount_value,
       min_order_amount,
-      max_discount_amount,
-      expiry_date,
+      max_discount,
+      expires_at,
       max_uses,
-      applicable_hikes
+      applicable_hike_id
     } = req.body;
 
     if (!code || !discount_type || !discount_value) {
@@ -100,27 +102,75 @@ async function createCoupon(req, res, next) {
     }
 
     const newCoupon = {
-      id: `cpn-${Date.now()}`,
       code: code.toUpperCase().trim(),
       discount_type,
       discount_value: Number(discount_value),
       min_order_amount: Number(min_order_amount) || 0,
-      max_discount_amount: max_discount_amount ? Number(max_discount_amount) : null,
-      expiry_date: expiry_date || null,
+      max_discount: max_discount ? Number(max_discount) : null,
+      expires_at: expires_at || null,
       max_uses: max_uses ? Number(max_uses) : null,
-      uses_count: 0,
-      applicable_hikes: applicable_hikes || [],
+      current_uses: 0,
+      applicable_hike_id: applicable_hike_id || null,
       is_active: true
     };
 
     if (isConfigured && supabaseAdmin) {
-      const { data, error } = await supabaseAdmin.from('coupons').insert(newCoupon).select().single();
+      const { data, error } = await supabaseAdmin.from('coupons').insert([newCoupon]).select().single();
       if (error) throw error;
+      mockDataService.createCoupon(data);
       return res.status(201).json({ success: true, data });
     }
 
-    mockStore.coupons.unshift(newCoupon);
-    return res.status(201).json({ success: true, data: newCoupon });
+    const created = mockDataService.createCoupon(newCoupon);
+    return res.status(201).json({ success: true, data: created });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Admin: Update coupon
+ */
+async function updateCoupon(req, res, next) {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (isConfigured && supabaseAdmin) {
+      const { data, error } = await supabaseAdmin.from('coupons').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      mockDataService.updateCoupon(id, updates);
+      return res.json({ success: true, data });
+    }
+
+    const updated = mockDataService.updateCoupon(id, updates);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Coupon not found.' });
+    }
+    return res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Admin: Delete coupon
+ */
+async function deleteCoupon(req, res, next) {
+  try {
+    const { id } = req.params;
+
+    if (isConfigured && supabaseAdmin) {
+      const { error } = await supabaseAdmin.from('coupons').delete().eq('id', id);
+      if (error) throw error;
+      return res.json({ success: true, message: 'Coupon deleted.' });
+    }
+
+    const idx = mockDataService.coupons.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      mockDataService.coupons.splice(idx, 1);
+    }
+    return res.json({ success: true, message: 'Coupon deleted.' });
   } catch (err) {
     next(err);
   }
@@ -129,5 +179,7 @@ async function createCoupon(req, res, next) {
 module.exports = {
   validateCoupon,
   getAllCoupons,
-  createCoupon
+  createCoupon,
+  updateCoupon,
+  deleteCoupon
 };

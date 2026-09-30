@@ -104,7 +104,8 @@ export default function BookingFlowPage() {
     setValidatingCoupon(true);
     setCouponError(null);
 
-    const originalAmount = (hike?.price || 299) * seats;
+    const basePrice = hike ? Number(hike.selling_price || hike.price || 299) : 299;
+    const originalAmount = basePrice * seats;
     try {
       const res = await validateCoupon(couponCode.trim(), originalAmount, hike?.id);
       if (res.success && res.data?.valid) {
@@ -123,7 +124,7 @@ export default function BookingFlowPage() {
   };
 
   // Recalculate price
-  const basePrice = hike ? Number(hike.price) : 299;
+  const basePrice = hike ? Number(hike.selling_price || hike.price || 299) : 299;
   const originalTotal = basePrice * seats;
   const discountTotal = appliedCoupon ? Number(appliedCoupon.discountAmount) : 0;
   const finalTotal = Math.max(0, originalTotal - discountTotal);

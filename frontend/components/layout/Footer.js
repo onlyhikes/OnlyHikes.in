@@ -1,143 +1,172 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Compass, Heart, Instagram, MessageSquare, Mountain, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, Compass, Instagram, MessageCircle, Mountain, ShieldCheck, MapPin } from 'lucide-react';
+import { getBrandSettings, getSiteContent } from '../../lib/api';
 
 export default function Footer() {
+  const [brand, setBrand] = useState({
+    brand_name: 'OnlyHikes.in',
+    tagline: 'YOUR WEEKEND JUST GOT WILDER.',
+    city: 'Jaipur, Rajasthan',
+    whatsapp_community_url: 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27',
+    instagram_url: 'https://www.instagram.com/onlyhikes.in/'
+  });
+  const [footerContent, setFooterContent] = useState(null);
+
+  useEffect(() => {
+    async function loadMeta() {
+      try {
+        const [brandRes, footerRes] = await Promise.all([
+          getBrandSettings(),
+          getSiteContent('footer')
+        ]);
+        if (brandRes.data) setBrand(prev => ({ ...prev, ...brandRes.data }));
+        if (footerRes.data) setFooterContent(footerRes.data);
+      } catch (err) {
+        console.error('Footer metadata fetch error:', err);
+      }
+    }
+    loadMeta();
+  }, []);
+
+  const whatsappUrl = brand.whatsapp_community_url || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27';
+  const instagramUrl = brand.instagram_url || 'https://www.instagram.com/onlyhikes.in/';
+
   return (
     <footer className="bg-charcoal-950 border-t border-white/10 pt-16 pb-12 relative overflow-hidden">
-      {/* Background flare */}
+      {/* Glow */}
       <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-acid/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Top CTA Banner */}
-        <div className="bg-gradient-to-r from-charcoal-850 to-charcoal-900 border border-white/10 rounded-3xl p-8 mb-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        {/* Community Social Banner */}
+        <div className="bg-charcoal-900 border border-white/10 rounded-3xl p-8 mb-16 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
           <div>
-            <span className="text-acid text-xs font-black uppercase tracking-widest">
-              CAMPUS REPRESENTATIVE PROGRAM
+            <span className="text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
+              <MessageCircle className="w-3.5 h-3.5" />
+              Official Student WhatsApp Channel
             </span>
             <h3 className="font-display font-black text-2xl md:text-3xl text-offwhite mt-1">
-              REPRESENT ONLYHIKES AT YOUR JAIPUR CAMPUS
+              GET TREK ALERTS FIRST ON WHATSAPP
             </h3>
             <p className="text-muted text-sm mt-1 max-w-xl">
-              Free trek passes, coordinator training, leadership creds, and cash bonuses for bringing your college squad out on the Aravalis.
+              Trail updates, pickup coordination, sunrise time tables, and group photo album drops for all Jaipur hikers.
             </p>
           </div>
-          <Link
-            href="/community"
-            className="inline-flex items-center gap-2 bg-acid text-charcoal-950 px-6 py-3.5 rounded-xl font-black text-sm uppercase tracking-wide hover:bg-acid-400 transition"
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-charcoal-950 px-6 py-3.5 rounded-xl font-black text-sm uppercase tracking-wide transition shadow-lg shrink-0"
           >
-            Join Campus Reps <ArrowUpRight className="w-4 h-4" />
-          </Link>
+            <MessageCircle className="w-4 h-4" />
+            Join WhatsApp Channel
+          </a>
         </div>
 
         {/* Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10 pb-12 border-b border-white/10">
-          {/* Brand Info */}
+          {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-acid flex items-center justify-center font-black text-charcoal-950 text-base">
                 ▲
               </div>
               <span className="font-display font-black text-2xl text-offwhite tracking-tight">
-                ONLYHIKES<span className="text-acid">.IN</span>
+                {brand.brand_name || 'ONLYHIKES'}<span className="text-acid">.IN</span>
               </span>
             </Link>
-            <p className="font-bold text-offwhite text-sm">
-              "YOUR WEEKEND JUST GOT WILDER."
+            <p className="font-black text-acid text-sm tracking-wide">
+              "{footerContent?.tagline || brand.tagline || 'YOUR WEEKEND JUST GOT WILDER.'}"
             </p>
             <p className="text-muted text-xs leading-relaxed max-w-sm">
-              Jaipur's premier student adventure community. We organize Aravali treks, sunrise runs, AC bus pickup & drops, fresh food, and community memories for college students across Jaipur.
+              Jaipur's dedicated student hiking movement. Curated Aravali treks, AC transit pickups, safety marshals, hydration packs, and authentic college squad memories.
             </p>
             <div className="flex items-center gap-3 pt-2">
               <a
-                href={process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/onlyhikes.in/'}
+                href={instagramUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-xl bg-charcoal-850 hover:bg-pink-600 hover:text-white text-muted flex items-center justify-center transition"
+                className="w-10 h-10 rounded-xl bg-charcoal-900 border border-white/10 hover:border-pink-500 hover:text-pink-400 text-muted flex items-center justify-center transition"
                 aria-label="Instagram"
                 title="OnlyHikes Instagram"
               >
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href={process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'}
+                href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-xl bg-charcoal-850 hover:bg-emerald-500 hover:text-white text-muted flex items-center justify-center transition"
+                className="w-10 h-10 rounded-xl bg-charcoal-900 border border-white/10 hover:border-emerald-500 hover:text-emerald-400 text-muted flex items-center justify-center transition"
                 aria-label="WhatsApp Community"
                 title="OnlyHikes WhatsApp Tribe"
               >
-                <MessageSquare className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4" />
               </a>
             </div>
           </div>
 
-          {/* Column 1: Adventures */}
+          {/* Expeditions Links */}
           <div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-acid mb-4">Adventures</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-acid mb-4">Expeditions</h4>
             <ul className="space-y-2.5 text-xs font-semibold text-muted">
               <li>
                 <Link href="/hikes" className="hover:text-offwhite transition">Upcoming Weekend Hikes</Link>
               </li>
               <li>
-                <Link href="/hikes/nahargarh-sunrise-hike" className="hover:text-offwhite transition">Nahargarh Sunrise Trek</Link>
+                <Link href="/explore" className="hover:text-offwhite transition">Aravali Fort Circuits</Link>
               </li>
               <li>
-                <Link href="/hikes/bhangarh-midnight-expedition" className="hover:text-offwhite transition">Bhangarh Midnight Trail</Link>
+                <Link href="/vote" className="hover:text-offwhite transition">Vote for Next Destination</Link>
               </li>
               <li>
-                <Link href="/hikes/hathni-kund-waterfall-trail" className="hover:text-offwhite transition">Hathni Kund Canyon</Link>
-              </li>
-              <li>
-                <Link href="/vote" className="hover:text-offwhite transition">Vote for Next Trail</Link>
+                <Link href="/#faq" className="hover:text-offwhite transition">Trek FAQs</Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 2: Explore Jaipur */}
+          {/* Pickup Points */}
           <div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-acid mb-4">Explore Jaipur</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-acid mb-4">Jaipur Pickups</h4>
             <ul className="space-y-2.5 text-xs font-semibold text-muted">
-              <li>
-                <Link href="/explore" className="hover:text-offwhite transition">Forts & Ridges</Link>
+              <li className="flex items-center gap-1.5 text-offwhite">
+                <MapPin className="w-3.5 h-3.5 text-acid" /> Mansarovar Metro Pillar 12
               </li>
-              <li>
-                <Link href="/explore" className="hover:text-offwhite transition">Top Sunrise Vantage Points</Link>
+              <li className="flex items-center gap-1.5 text-offwhite">
+                <MapPin className="w-3.5 h-3.5 text-acid" /> Vaishali Nagar Amrapali Circle
               </li>
-              <li>
-                <Link href="/explore" className="hover:text-offwhite transition">Sunset Perches</Link>
+              <li className="flex items-center gap-1.5 text-offwhite">
+                <MapPin className="w-3.5 h-3.5 text-acid" /> Raja Park Golcha Garden
               </li>
-              <li>
-                <Link href="/explore" className="hover:text-offwhite transition">Hidden Canyons & Stepwells</Link>
-              </li>
-              <li>
-                <Link href="/account" className="hover:text-offwhite transition">Student Referral (₹50 Off)</Link>
+              <li className="flex items-center gap-1.5 text-offwhite">
+                <MapPin className="w-3.5 h-3.5 text-acid" /> WTP Main Gate Malviya Nagar
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Inclusions & Safety */}
+          {/* Inclusions */}
           <div>
-            <h4 className="text-xs font-black uppercase tracking-widest text-acid mb-4">Inclusions</h4>
+            <h4 className="text-xs font-black uppercase tracking-widest text-acid mb-4">Every Trek Includes</h4>
             <ul className="space-y-2.5 text-xs font-semibold text-muted">
               <li className="flex items-center gap-1.5 text-offwhite">
-                <ShieldCheck className="w-3.5 h-3.5 text-acid" /> Certified Hike Marshals
+                <ShieldCheck className="w-3.5 h-3.5 text-acid" /> Certified Lead Marshals
               </li>
               <li className="flex items-center gap-1.5 text-offwhite">
-                <Mountain className="w-3.5 h-3.5 text-acid" /> AC Bus Pickup & Drop
+                <Mountain className="w-3.5 h-3.5 text-acid" /> Dedicated AC Bus Transit
               </li>
               <li className="flex items-center gap-1.5 text-offwhite">
-                <Compass className="w-3.5 h-3.5 text-acid" /> First-Aid & Hydration
+                <Compass className="w-3.5 h-3.5 text-acid" /> First-Aid & Hydration Pack
               </li>
               <li className="pt-2 text-[11px] text-muted">
-                Pickups: WTP Malviya Nagar, Raja Park, Vaishali Nagar, Mansarovar Metro.
+                Student verified. Safe for solo & squad bookings.
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Big Impact Logo Mark */}
-        <div className="py-10 text-center select-none opacity-20 pointer-events-none">
+        {/* Big Brand Typography */}
+        <div className="py-10 text-center select-none opacity-15 pointer-events-none">
           <span className="font-display font-black text-6xl sm:text-8xl md:text-9xl text-stroke tracking-tighter">
             ONLYHIKES
           </span>
@@ -146,11 +175,11 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4">
           <div>
-            © {new Date().getFullYear()} OnlyHikes.in — Student Adventure Community Jaipur.
+            {footerContent?.copyright || `© ${new Date().getFullYear()} OnlyHikes.in. All rights reserved.`}
           </div>
           <div className="flex items-center gap-6">
-            <span>Don't spend your weekend indoors. Go explore.</span>
-            <span className="text-acid font-semibold">Jaipur, Rajasthan</span>
+            <span className="text-offwhite/70">{footerContent?.disclaimer || "Jaipur's Student Adventure Community"}</span>
+            <span className="text-acid font-bold">{footerContent?.city || brand.city || 'Jaipur, Rajasthan'}</span>
           </div>
         </div>
       </div>

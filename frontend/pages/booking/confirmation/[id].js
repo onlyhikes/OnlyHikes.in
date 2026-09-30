@@ -65,17 +65,16 @@ export default function BookingConfirmationPage() {
     );
   }
 
-  // Fallback demo ticket if id is newly generated
   const bookingData = booking || {
-    booking_ref: id || 'OH-2026-9281',
-    hike_title: 'NAHARGARH SUNRISE HIKE',
-    hike_date: 'Sunday, 4 October 2026 · 5:30 AM',
-    seats_count: 2,
-    pickup_title: 'WTP / Gaurav Tower (Opposite World Trade Park)',
+    booking_ref: id || 'OH-RESERVATION',
+    hike_title: 'JAIPUR ARAVALI EXPEDITION',
+    hike_date: 'Sunday Morning · 5:30 AM',
+    seats_count: 1,
+    pickup_title: 'Designated Jaipur Pickup Stop',
     pickup_time: '04:45 AM',
-    total_amount: 548.00,
-    payment_status: 'paid',
-    student_name: 'Aarav Sharma',
+    total_amount: 299.00,
+    payment_status: 'pending',
+    student_name: 'Student Hiker',
     whatsapp_group_url: process.env.NEXT_PUBLIC_WHATSAPP_GROUP_URL || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27'
   };
 
