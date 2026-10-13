@@ -1,20 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Flame, Vote as VoteIcon, Lock } from 'lucide-react';
-import Badge from '../ui/Badge';
+import { CheckCircle2, Vote as VoteIcon } from 'lucide-react';
 
 export default function VoteCard({
   option,
   totalRoundVotes = 1,
   hasVoted = false,
   isVotedByMe = false,
-  isLoggedIn = false,
   onVote,
-  isPlaceholderDemo = false,
   submitting = false
 }) {
   const percentage = totalRoundVotes > 0
-    ? Math.round((option.votes_count / totalRoundVotes) * 100)
+    ? Math.round(((option.votes_count || 0) / totalRoundVotes) * 100)
     : 0;
 
   return (
@@ -35,17 +32,10 @@ export default function VoteCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900 via-charcoal-900/40 to-transparent" />
 
-        {/* Difficulty badge */}
-        <div className="absolute top-4 left-4">
-          <Badge variant="charcoal" size="xs">
-            {option.difficulty || 'Moderate'}
-          </Badge>
-        </div>
-
         {isVotedByMe && (
           <div className="absolute bottom-3 right-4 bg-acid text-charcoal-950 font-black text-xs px-3 py-1 rounded-full flex items-center gap-1.5 shadow-acid-sm">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Your Choice
+            Your Vote
           </div>
         )}
       </div>
@@ -62,14 +52,14 @@ export default function VoteCard({
         {/* Animated Percentage Bar */}
         <div className="space-y-1.5 mb-5 mt-auto">
           <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-offwhite">{option.votes_count} votes</span>
+            <span className="text-offwhite">{option.votes_count || 0} votes</span>
             <span className="text-acid font-black text-sm">{percentage}%</span>
           </div>
           <div className="w-full h-2.5 bg-charcoal-800 rounded-full overflow-hidden p-0.5 border border-white/5">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${percentage}%` }}
-              transition={{ duration: 0.9, ease: 'easeOut' }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
               className={`h-full rounded-full ${isVotedByMe ? 'bg-acid shadow-acid-sm' : 'bg-charcoal-600'}`}
             />
           </div>
@@ -77,24 +67,17 @@ export default function VoteCard({
 
         {/* Voting Action */}
         {!hasVoted ? (
-          isLoggedIn ? (
-            <button
-              onClick={() => onVote(option.id)}
-              disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-charcoal-800 hover:bg-acid text-offwhite hover:text-charcoal-950 font-black text-xs uppercase tracking-wider transition-all disabled:opacity-50"
-            >
-              <VoteIcon className="w-4 h-4" />
-              <span>{submitting ? 'Casting Vote...' : 'Vote for this trail'}</span>
-            </button>
-          ) : (
-            <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-charcoal-850/60 border border-white/5 text-muted text-xs font-bold">
-              <Lock className="w-3.5 h-3.5" />
-              <span>Login to vote</span>
-            </div>
-          )
+          <button
+            onClick={() => onVote(option.id)}
+            disabled={submitting}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-charcoal-800 hover:bg-acid text-offwhite hover:text-charcoal-950 font-black text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+          >
+            <VoteIcon className="w-4 h-4" />
+            <span>{submitting ? 'Casting Vote...' : 'Vote For This Trail'}</span>
+          </button>
         ) : (
           <div className="text-center py-2.5 rounded-xl bg-charcoal-850/60 border border-white/5 text-xs font-semibold text-muted">
-            {isVotedByMe ? 'You voted for this destination' : 'Round voted'}
+            {isVotedByMe ? '✓ You voted for this trail' : 'Vote recorded'}
           </div>
         )}
       </div>

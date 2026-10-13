@@ -1,27 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Menu,
   X,
-  Compass,
-  Mountain,
-  Vote,
   User,
   ShieldAlert,
   ArrowRight,
   LogOut,
   Instagram,
-  MessageCircle,
-  Megaphone
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../ui/Button';
-import { getBrandSettings, getSiteContent } from '../../lib/api';
+import { getBrandSettings } from '../../lib/api';
 
 export default function Navbar() {
-  const router = useRouter();
   const { user, isAdmin, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,7 +25,6 @@ export default function Navbar() {
     whatsapp_community_url: 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27',
     instagram_url: 'https://www.instagram.com/onlyhikes.in/'
   });
-  const [announcement, setAnnouncement] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,118 +32,49 @@ export default function Navbar() {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    async function loadBrandAndAnnouncement() {
+    async function loadBrand() {
       try {
-        const [brandRes, contentRes] = await Promise.all([
-          getBrandSettings(),
-          getSiteContent('announcement')
-        ]);
+        const brandRes = await getBrandSettings();
         if (brandRes.data) setBrand(prev => ({ ...prev, ...brandRes.data }));
-        if (contentRes.data && contentRes.data.is_active) {
-          setAnnouncement(contentRes.data);
-        }
       } catch (err) {
         console.error('Navbar metadata fetch error:', err);
       }
     }
-    loadBrandAndAnnouncement();
+    loadBrand();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const navLinks = [
-    { label: 'Upcoming Hikes', href: '/hikes', icon: Mountain },
-    { label: 'Aravali Trails', href: '/explore', icon: Compass },
-    { label: 'Community Vote', href: '/vote', icon: Vote },
-  ];
-
-  const isActive = (href) => {
-    if (href === '/') return router.pathname === '/';
-    return router.pathname.startsWith(href);
-  };
 
   const whatsappUrl = brand.whatsapp_community_url || 'https://whatsapp.com/channel/0029VbEaykELY6d6Jr9wht27';
   const instagramUrl = brand.instagram_url || 'https://www.instagram.com/onlyhikes.in/';
 
   return (
     <>
-      {/* Top Announcement Bar (Dynamic from CMS) */}
-      {announcement && announcement.is_active && (
-        <div className="bg-acid text-charcoal-950 text-xs font-black py-2 px-4 text-center tracking-wide flex items-center justify-center gap-2 relative z-50">
-          <Megaphone className="w-3.5 h-3.5 shrink-0" />
-          <span>{announcement.text || '⚡ NEXT SUNDAY EXPEDITION IS LIVE · LIMITED SEATS ONLY'}</span>
-          {announcement.link && (
-            <Link href={announcement.link} className="underline hover:text-charcoal-800 ml-1">
-              {announcement.link_text || 'Book Seat →'}
-            </Link>
-          )}
-        </div>
-      )}
-
-      {/* Main Modern Minimal Lifestyle Social Header */}
+      {/* Clean Minimal Header */}
       <header
-        className={`fixed left-0 right-0 z-40 transition-all duration-300 ${
-          announcement && announcement.is_active ? 'top-8' : 'top-0'
-        } ${
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
             ? 'py-3 bg-charcoal-950/90 backdrop-blur-md border-b border-white/10 shadow-2xl'
             : 'py-5 bg-transparent'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Dynamic Brand Logo */}
+          {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            {brand.logo_url ? (
-              <img
-                src={brand.logo_url}
-                alt={brand.brand_name || 'OnlyHikes.in'}
-                className="h-8 max-w-[140px] object-contain group-hover:scale-105 transition-transform"
-              />
-            ) : (
-              <>
-                <div className="w-8 h-8 rounded-lg bg-acid flex items-center justify-center font-black text-charcoal-950 text-base shadow-acid-sm group-hover:scale-105 transition-transform">
-                  ▲
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-display font-black text-xl tracking-tight text-offwhite group-hover:text-acid transition-colors">
-                    ONLYHIKES<span className="text-acid">.IN</span>
-                  </span>
-                  <span className="text-[9px] uppercase tracking-widest text-muted -mt-1 font-semibold">
-                    Jaipur Student Treks
-                  </span>
-                </div>
-              </>
-            )}
+            <div className="w-8 h-8 rounded-lg bg-acid flex items-center justify-center font-black text-charcoal-950 text-base shadow-acid-sm group-hover:scale-105 transition-transform">
+              ▲
+            </div>
+            <div className="flex flex-col">
+              <span className="font-display font-black text-xl tracking-tight text-offwhite group-hover:text-acid transition-colors">
+                ONLYHIKES<span className="text-acid">.IN</span>
+              </span>
+              <span className="text-[9px] uppercase tracking-widest text-muted -mt-1 font-semibold">
+                Jaipur Student Treks
+              </span>
+            </div>
           </Link>
 
-          {/* Minimal Navigation Center */}
-          <nav className="hidden md:flex items-center gap-1 bg-charcoal-900/80 px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
-            {navLinks.map((link) => {
-              const active = isActive(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all relative ${
-                    active
-                      ? 'text-charcoal-950 font-black'
-                      : 'text-offwhite/80 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {active && (
-                    <motion.div
-                      layoutId="navPill"
-                      className="absolute inset-0 bg-acid rounded-full"
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10">{link.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Social Icons & Actions */}
+          {/* Right Actions: Socials & Account */}
           <div className="hidden md:flex items-center gap-3">
             {/* Instagram Social Icon */}
             <a
@@ -208,17 +131,11 @@ export default function Navbar() {
               </div>
             ) : (
               <Link href="/login">
-                <span className="text-xs font-bold text-offwhite/80 hover:text-acid px-2.5 py-1.5 transition">
+                <span className="text-xs font-bold text-offwhite/80 hover:text-acid px-3 py-1.5 rounded-xl bg-charcoal-850 border border-white/10 hover:border-acid/40 transition">
                   Login
                 </span>
               </Link>
             )}
-
-            <Link href="/hikes">
-              <Button variant="acid" size="sm" className="font-black uppercase tracking-wider text-xs">
-                Book Sunday Trek →
-              </Button>
-            </Link>
           </div>
 
           {/* Mobile Hamburger */}
@@ -250,30 +167,11 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className={`fixed inset-x-0 z-40 md:hidden bg-charcoal-950/95 backdrop-blur-xl border-b border-white/10 p-5 shadow-2xl ${
-              announcement && announcement.is_active ? 'top-[96px]' : 'top-[68px]'
-            }`}
+            className="fixed inset-x-0 top-[68px] z-40 md:hidden bg-charcoal-950/95 backdrop-blur-xl border-b border-white/10 p-5 shadow-2xl"
           >
             <div className="flex flex-col gap-3">
-              {navLinks.map((link) => {
-                const IconComponent = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-charcoal-800 text-base font-bold text-offwhite"
-                  >
-                    {IconComponent && <IconComponent className="w-5 h-5 text-acid" />}
-                    {link.label}
-                  </Link>
-                );
-              })}
-
-              <hr className="border-white/10 my-1" />
-
               {/* Social Channels on Mobile */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
+              <div className="grid grid-cols-2 gap-2">
                 <a
                   href={instagramUrl}
                   target="_blank"
@@ -309,7 +207,7 @@ export default function Navbar() {
               )}
 
               {user ? (
-                <div className="flex flex-col gap-2 pt-2">
+                <div className="flex flex-col gap-2 pt-1">
                   <Link
                     href="/account"
                     onClick={() => setMobileMenuOpen(false)}
@@ -330,7 +228,7 @@ export default function Navbar() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 pt-2">
+                <div className="grid grid-cols-2 gap-2 pt-1">
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
@@ -347,16 +245,6 @@ export default function Navbar() {
                   </Link>
                 </div>
               )}
-
-              <Link
-                href="/hikes"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-2"
-              >
-                <Button variant="acid" size="lg" className="w-full uppercase font-black">
-                  Book Sunday Trek →
-                </Button>
-              </Link>
             </div>
           </motion.div>
         )}

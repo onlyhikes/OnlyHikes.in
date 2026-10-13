@@ -92,12 +92,12 @@ export default function AdminOverviewPage() {
   ];
 
   const quickActions = [
-    { title: 'Hikes & Media', desc: 'Create, edit pricing & publish hikes', href: '/admin/hikes', icon: Mountain },
-    { title: 'Site Content CMS', desc: 'Edit Hero, Why Us, How It Works text', href: '/admin/content', icon: FileText },
-    { title: 'Media Library', desc: 'Upload posters, reels & photos', href: '/admin/media', icon: Image },
-    { title: 'Route Waypoints', desc: 'Set step-by-step route journey markers', href: '/admin/routes', icon: MapPin },
-    { title: 'Brand & Socials', desc: 'Update WhatsApp channel & Instagram links', href: '/admin/brand', icon: Settings },
-    { title: 'Passenger Manifest', desc: 'Check attendee lists & pickup spots', href: '/admin/bookings', icon: Ticket }
+    { title: 'Hikes & Posters', desc: 'Create hikes, upload posters & set seats', href: '/admin/hikes', icon: Mountain },
+    { title: 'Bookings & Manifest', desc: 'Check student tickets & passenger lists', href: '/admin/bookings', icon: Ticket },
+    { title: 'Community Voting (ON/OFF)', desc: 'Show or hide voting poll on the website', href: '/admin/voting', icon: CheckCircle2 },
+    { title: 'Pickup Points', desc: 'Manage Jaipur bus pickup locations & timings', href: '/admin/pickups', icon: MapPin },
+    { title: 'Discount Coupons', desc: 'Create & manage promo codes like ONLYHIKES50', href: '/admin/coupons', icon: Tag },
+    { title: 'Registered Students', desc: 'View registered college students', href: '/admin/users', icon: Users }
   ];
 
   return (

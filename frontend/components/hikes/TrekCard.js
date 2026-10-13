@@ -106,9 +106,9 @@ export default function TrekCard({ hike }) {
         {/* Action Button */}
         <Link href={href} className="w-full">
           <button
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-charcoal-800 hover:bg-acid text-offwhite hover:text-charcoal-950 font-black text-xs uppercase tracking-wider transition-all duration-200"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-acid hover:bg-acid/90 text-charcoal-950 font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-acid-sm"
           >
-            <span>EXPLORE EXPEDITION</span>
+            <span>BOOK TICKET / CHECK SEATS</span>
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
         </Link>

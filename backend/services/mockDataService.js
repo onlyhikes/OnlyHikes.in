@@ -383,6 +383,82 @@ class MockDataService {
     this.reviews = []; // Real approved reviews only!
     this.savedHikes = []; // User saved hikes
     this.users = []; // Real registered students only
+    this.votes = []; // Real student votes
+    this.votingRounds = [
+      {
+        id: 'round-1',
+        title: 'VOTE NEXT SUNDAY TRAIL',
+        description: 'Which Aravali trail should we hike next Sunday? Cast your vote below!',
+        start_date: new Date().toISOString(),
+        end_date: new Date(Date.now() + 5 * 86400000).toISOString(),
+        is_active: false, // Off by default until admin enables it
+        options: [
+          {
+            id: 'opt-1',
+            round_id: 'round-1',
+            title: 'Sambhar Salt Lake Sunrise',
+            subtitle: 'White salt flats & flamingoes',
+            image_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+            votes_count: 0
+          },
+          {
+            id: 'opt-2',
+            round_id: 'round-1',
+            title: 'Amer Sagar Stepwell & Ridge',
+            subtitle: 'Hidden stepwell & fort wall climb',
+            image_url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80',
+            votes_count: 0
+          },
+          {
+            id: 'opt-3',
+            round_id: 'round-1',
+            title: 'Garh Ganesh Ridge Trail',
+            subtitle: 'Panoramic Jaipur ridge walk',
+            image_url: 'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?auto=format&fit=crop&w=800&q=80',
+            votes_count: 0
+          }
+        ]
+      }
+    ];
+  }
+
+  // --- Voting Management ---
+  getLatestVotingRound() {
+    return this.votingRounds[0] || null;
+  }
+
+  getActiveVotingRound() {
+    return this.votingRounds.find(r => r.is_active) || null;
+  }
+
+  toggleVotingRound(isActive) {
+    if (this.votingRounds.length === 0) return null;
+    this.votingRounds[0].is_active = Boolean(isActive);
+    return this.votingRounds[0];
+  }
+
+  hasUserVoted(roundId, userId) {
+    return this.votes.some(v => v.round_id === roundId && v.user_id === userId);
+  }
+
+  getUserVotedOption(roundId, userId) {
+    const found = this.votes.find(v => v.round_id === roundId && v.user_id === userId);
+    return found ? found.option_id : null;
+  }
+
+  castVote(roundId, optionId, userId) {
+    const round = this.votingRounds.find(r => r.id === roundId);
+    if (!round) throw new Error('Voting round not found.');
+    if (userId && this.hasUserVoted(roundId, userId)) {
+      throw new Error('You have already voted in this round.');
+    }
+    const opt = round.options.find(o => o.id === optionId);
+    if (!opt) throw new Error('Voting option not found.');
+    opt.votes_count = (opt.votes_count || 0) + 1;
+    if (userId) {
+      this.votes.push({ id: `vote_${Date.now()}`, round_id: roundId, option_id: optionId, user_id: userId });
+    }
+    return opt;
   }
 
   // --- Brand Settings ---

@@ -6,14 +6,9 @@ import {
   Mountain,
   Ticket,
   Bus,
+  Vote,
   Tag,
   Users,
-  FileText,
-  Image,
-  MapPin,
-  MessageSquare,
-  Settings,
-  Globe,
   ArrowLeft,
   ShieldAlert,
   Lock,
@@ -77,13 +72,13 @@ export default function AdminLayout({ children, title, subtitle, action }) {
               <Lock className="w-7 h-7" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-flame bg-flame/10 px-3 py-1 rounded-full border border-flame/20">
-              Admin CMS Control Center
+              Admin Control Room
             </span>
             <h1 className="font-display font-black text-2xl text-offwhite mt-3">
               COORDINATOR OPS
             </h1>
             <p className="text-muted text-xs mt-1">
-              Authorized coordinators only. Enter master passcode to control hikes, live bookings, content CMS, brand, and media.
+              Enter master passcode to manage hikes, seat availability, bookings, and voting.
             </p>
           </div>
 
@@ -120,7 +115,7 @@ export default function AdminLayout({ children, title, subtitle, action }) {
 
           <div className="mt-6 pt-6 border-t border-white/10 text-center">
             <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-offwhite transition">
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to OnlyHikes Homepage
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to OnlyHikes Website
             </Link>
           </div>
         </div>
@@ -128,29 +123,14 @@ export default function AdminLayout({ children, title, subtitle, action }) {
     );
   }
 
-  const navSections = [
-    {
-      heading: 'Operations',
-      items: [
-        { label: 'Overview', href: '/admin', icon: LayoutDashboard },
-        { label: 'Hikes & Media', href: '/admin/hikes', icon: Mountain },
-        { label: 'Bookings & Manifest', href: '/admin/bookings', icon: Ticket },
-        { label: 'Pickup Points', href: '/admin/pickups', icon: Bus },
-        { label: 'Discount Coupons', href: '/admin/coupons', icon: Tag },
-        { label: 'Registered Students', href: '/admin/users', icon: Users },
-      ]
-    },
-    {
-      heading: 'Content & Brand CMS',
-      items: [
-        { label: 'Site Content CMS', href: '/admin/content', icon: FileText },
-        { label: 'Media Library', href: '/admin/media', icon: Image },
-        { label: 'Route Waypoints', href: '/admin/routes', icon: MapPin },
-        { label: 'Student Reviews', href: '/admin/reviews', icon: MessageSquare },
-        { label: 'Brand & Socials', href: '/admin/brand', icon: Settings },
-        { label: 'SEO Metadata', href: '/admin/seo', icon: Globe },
-      ]
-    }
+  const navItems = [
+    { label: 'Overview', href: '/admin', icon: LayoutDashboard },
+    { label: 'Hikes & Posters', href: '/admin/hikes', icon: Mountain },
+    { label: 'Bookings & Manifest', href: '/admin/bookings', icon: Ticket },
+    { label: 'Pickup Points', href: '/admin/pickups', icon: Bus },
+    { label: 'Community Voting', href: '/admin/voting', icon: Vote },
+    { label: 'Coupons', href: '/admin/coupons', icon: Tag },
+    { label: 'Registered Students', href: '/admin/users', icon: Users },
   ];
 
   return (
@@ -168,44 +148,35 @@ export default function AdminLayout({ children, title, subtitle, action }) {
                 ONLYHIKES
               </span>
               <span className="block text-[9px] text-acid font-bold tracking-widest uppercase">
-                Coordinator GUI CMS
+                Coordinator Admin
               </span>
             </div>
           </Link>
-          <Link href="/" title="Back to Public Site" className="text-muted hover:text-offwhite transition">
+          <Link href="/" title="Back to Website" className="text-muted hover:text-offwhite transition">
             <ArrowLeft className="w-4 h-4" />
           </Link>
         </div>
 
-        {/* Navigation Sections */}
-        <nav className="p-4 space-y-5 flex-grow overflow-y-auto">
-          {navSections.map((section, sIdx) => (
-            <div key={sIdx}>
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted/60 px-3 mb-1.5 block">
-                {section.heading}
-              </span>
-              <div className="space-y-1">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = router.pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
-                        active
-                          ? 'bg-acid text-charcoal-950 shadow-acid-sm'
-                          : 'text-muted hover:text-offwhite hover:bg-charcoal-800'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        {/* Navigation Links */}
+        <nav className="p-4 space-y-1.5 flex-grow overflow-y-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = router.pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition ${
+                  active
+                    ? 'bg-acid text-charcoal-950 shadow-acid-sm'
+                    : 'text-muted hover:text-offwhite hover:bg-charcoal-800'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Admin status & lock */}
